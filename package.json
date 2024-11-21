@@ -1,0 +1,19 @@
+{
+  "dependencies": {
+    "firebase": "^11.0.2",
+    "firebase-admin": "^13.0.0",
+    "pg": "^8.13.1"
+  },
+  "name": "project",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/config.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
