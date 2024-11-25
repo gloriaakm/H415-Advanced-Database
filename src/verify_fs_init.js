@@ -1,6 +1,6 @@
 import { db } from "./config.js";
 
-const firestoreVerify = async () => {
+const verify_firestore_init = async () => {
   try {
     console.log("Firestore initialized successfully:", db);
   } catch (error) {
@@ -8,4 +8,4 @@ const firestoreVerify = async () => {
   }
 };
 
-firestoreVerify();
+verify_firestore_init();
