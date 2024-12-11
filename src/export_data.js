@@ -1,48 +1,62 @@
-import { db } from "./config.js";
-import fs from "fs";
-import { collection, writeBatch, doc } from "firebase/firestore";
+// generate_datasets.js
+import fs from 'fs';
+import path from 'path';
+import { db } from './config.js';
+import { collection, doc, writeBatch } from 'firebase/firestore';
 
-const importData = async () => {
-  try {
-    // Reading and parsing the JSON data
-    const data = JSON.parse(fs.readFileSync("./data/products.json", "utf-8"));
+// Helper function to save products to Firestore in batches
+const saveProductsToFirestore = async (products, collectionName) => {
+    const batch = writeBatch(db); // Initialize batch
 
-    const collectionRef = collection(db, "products");
-    const batchSize = 500; // Firestore limits batch writes to 500 operations
-    let batch = writeBatch(db); // Initialize the first batch
-    let counter = 0; // Track the number of items in the current batch
-    let totalCount = 0; // Track the total number of items uploaded
+    products.forEach((product) => {
+        const docRef = doc(collection(db, collectionName), product.product_id); // Reference the document
+        batch.set(docRef, product); // Add set operation to the batch
+    });
 
-    for (const product of data) {
-      // Create a document reference with an auto-generated ID
-      const docRef = doc(collectionRef);
-
-      // Add the product to the batch
-      batch.set(docRef, product);
-      counter++;
-      totalCount++;
-
-      // If the batch is full, commit it and start a new one
-      if (counter === batchSize) {
-        await batch.commit(); // Commit the batch
-        console.log(`Batch committed: ${totalCount} items uploaded so far.`);
-        // Add a delay to prevent overloading Firestore
-        await delay(200); // Adjust delay (in ms) based on Firestore limits
-        batch = writeBatch(db); // Start a new batch
-        counter = 0;
-      }
-    }
-
-    // Commit any remaining documents in the final batch
-    if (counter > 0) {
-      await batch.commit();
-      console.log(`Final batch committed: ${totalCount} items uploaded in total.`);
-    }
-
-    console.log("All data successfully uploaded.");
-  } catch (error) {
-    console.error("Error importing data:", error.message);
-  }
+    await batch.commit(); // Commit the batch
+    console.log(`Saved ${products.length} products to Firestore collection ${collectionName}`);
 };
 
-importData();
+// Function to read and process dataset in chunks
+const processDataset = async (filePath) => {
+    // Read the file and parse the data
+    const rawData = fs.readFileSync(filePath);
+    const products = JSON.parse(rawData);
+
+    // Get collection name from the filename (e.g., 'ecommerce_1m' from 'ecommerce_1m.json')
+    const collectionName = path.basename(filePath, '.json');
+
+    console.log(`Processing dataset from ${filePath}...`);
+
+    // Process the data in chunks of 10,000
+    const chunkSize = 10000;
+    for (let i = 0; i < products.length; i += chunkSize) {
+        const chunk = products.slice(i, i + chunkSize); // Slice the chunk of products
+        try {
+            await saveProductsToFirestore(chunk, collectionName); // Save chunk to Firestore
+        } catch (error) {
+            console.error(`Error saving products to collection ${collectionName}: ${error.message}`);
+        }
+    }
+
+    console.log(`All products from ${filePath} have been saved to Firestore.`);
+};
+
+// Main function to run the process
+const runDatasetProcessing = async () => {
+    const datasetFilePaths = [
+        './data/ecommerce_5k.json',
+        //'./data/ecommerce_10k.json',
+        //'./data/ecommerce_100k.json',
+        //'./data/ecommerce_500k.json',
+        //'./data/ecommerce_1m.json',
+    ];
+
+    for (const filePath of datasetFilePaths) {
+        await processDataset(filePath); // Process each dataset file
+    }
+};
+
+runDatasetProcessing().catch((error) => {
+    console.error('Error processing datasets:', error);
+});

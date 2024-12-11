@@ -77,6 +77,7 @@ const datasetSizes = [
     { size: 1000, filename: 'ecommerce_1k.json' },
     { size: 10000, filename: 'ecommerce_10k.json' },
     { size: 100000, filename: 'ecommerce_100k.json' },
+    { size: 500000, filename: 'ecommerce_500k.json' },
     { size: 1000000, filename: 'ecommerce_1m.json' },
 ];
 
