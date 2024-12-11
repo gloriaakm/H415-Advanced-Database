@@ -1,4 +1,4 @@
-import { db } from '../config.js';
+import { db } from './config.js';
 import { doc, updateDoc } from 'firebase/firestore';
 
 // Function to update the price of a product document

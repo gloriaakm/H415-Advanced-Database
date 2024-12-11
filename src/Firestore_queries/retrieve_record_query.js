@@ -1,4 +1,4 @@
-import { db } from '../config.js';
+import { db } from './config.js';
 import { collection, query, where, getDocs } from "firebase/firestore";
 
 // Function to retrieve a specific document based on a product_id

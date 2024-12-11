@@ -1,4 +1,4 @@
-import { db } from '../config.js';
+import { db } from './config.js';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 // Function to delete documents based on category

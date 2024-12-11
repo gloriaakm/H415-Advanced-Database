@@ -1,4 +1,4 @@
-import { db } from '../config.js';
+import { db } from './config.js';
 import { collection, getDocs } from "firebase/firestore";
 
 // Function to retrieve all documents

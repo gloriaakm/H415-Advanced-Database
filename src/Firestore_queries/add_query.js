@@ -1,4 +1,4 @@
-import { db } from '../config.js';
+import { db } from './config.js';
 import { collection, addDoc } from 'firebase/firestore';
 
 const addQuery = async (collectionName, document) => {
