@@ -55,15 +55,15 @@ const main = async () => {
 
     // Step 4: Benchmark deletion of the document
     await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], product_ids[i]]);
-
+    /*
     // Step 5: Re-add the deleted document
     let newDocId = null; // To capture the new document ID
     const readdDocumentFn = async () => {newDocId = await addQuery(datasetSizes[i], retrievedDoc);};
     await runBenchmark(readdDocumentFn, 'Re-add Query', []);
-
+    
     // Step 6: Benchmark update query
     await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]);
-
+    */
     // Step 7: Benchmark compound query
     await runBenchmark(compoundQueryTest, 'Compound Query', [datasetSizes[i], 'Home']);
 

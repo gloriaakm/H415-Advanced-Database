@@ -2,6 +2,7 @@
 import { performance } from 'perf_hooks';
 import { retrieveAllQuery } from './retrieve_all_query.js';
 import { retrieveRecordQuery } from './retrieve_record_query.js';
+import { retrieveDocQuery } from './retrieve_doc_query.js';
 import { deleteQuery } from './delete_query.js';
 import { addQuery } from './add_query.js';
 import { updateQuery } from './update_query.js';
@@ -34,8 +35,8 @@ export const runBenchmark = async (queryFn, queryName, args = [], iterations = 1
 };
 
 
-const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_50k', 'ecommerce_100k', 'ecommerce_1m']; // Datasets
-const productIs = ['3', '1924', '8124', '456', '129', '42'];
+const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_100k', 'ecommerce_1m']; // Datasets
+const productIds = ['3', '1924', '8124', '129', '42'];
 
 const main = async () => {
   for (let i = 0; i < datasetSizes.length; i++) {
