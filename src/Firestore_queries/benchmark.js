@@ -1,3 +1,4 @@
+import { db } from './config.js';
 import { performance } from 'perf_hooks';
 
 // Import queries
@@ -38,37 +39,37 @@ const runBenchmark = async (queryFn, queryName, args = [], iterations = 10) => {
 
 // Main function
 const main = async () => {
-  const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_50k', 'ecommerce_100k', 'ecommerce_1m']; // Datasets
-  const product_ids = ['3', '1924', '8124', '456', '129', '42'];
+  const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_100k', 'ecommerce_500k', 'ecommerce_1m'];
+  const product_ids = ['3', '1924', '8124', '456', '129', '42', '67890'];
 
   for (let i = 0; i < datasetSizes.length; i++) {
     console.log(`\nBenchmarking on dataset: ${datasetSizes[i]}`);
 
     // Step 1: Retrieve all documents
-    await runBenchmark(retrieveAllQuery, 'Retrieve All Query', [datasetSizes[i]]);
+    await runBenchmark(() => retrieveAllQuery(db, datasetSizes[i]), 'Retrieve All Query');
     
     // Step 2: Retrieve a specific record
-    await runBenchmark(retrieveRecordQuery, 'Retrieve Record Query', [datasetSizes[i], product_ids[i]]);
+    await runBenchmark(() => retrieveRecordQuery(db, datasetSizes[i], product_ids[i]), 'Retrieve Record Query');
 
     // Step 3: Retrieve a specific document by product_id
-    const retrievedDoc = await retrieveDocQuery(datasetSizes[i], product_ids[i]);
+    const retrievedDoc = await retrieveDocQuery(db, datasetSizes[i], product_ids[i]);
 
     // Step 4: Benchmark deletion of the document
-    await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], product_ids[i]]);
-    /*
+    await runBenchmark(() => deleteQuery(db, datasetSizes[i], product_ids[i]), 'Delete Query');
+    
     // Step 5: Re-add the deleted document
     let newDocId = null; // To capture the new document ID
-    const readdDocumentFn = async () => {newDocId = await addQuery(datasetSizes[i], retrievedDoc);};
-    await runBenchmark(readdDocumentFn, 'Re-add Query', []);
+    const readdDocumentFn = async () => { newDocId = await addQuery(db, datasetSizes[i], retrievedDoc); };
+    await runBenchmark(readdDocumentFn, 'Re-add Query');
     
     // Step 6: Benchmark update query
-    await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]);
-    */
+    await runBenchmark(() => updateQuery(db, datasetSizes[i], newDocId, 299.99), 'Update Query');
+    
     // Step 7: Benchmark compound query
-    await runBenchmark(compoundQueryTest, 'Compound Query', [datasetSizes[i], 'Home']);
+    await runBenchmark(() => compoundQueryTest(db, datasetSizes[i], 'Home'), 'Compound Query');
 
     // Step 8: Benchmark paginated query
-    await runBenchmark(paginatedQueryTest, 'Paginated Query', [datasetSizes[i], 100, null]);
+    await runBenchmark(() => paginatedQueryTest(db, datasetSizes[i], 100, null), 'Paginated Query');
   }
 };
 
