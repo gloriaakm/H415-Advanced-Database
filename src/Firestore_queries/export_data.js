@@ -1,4 +1,5 @@
 // Import dependencies
+// Import dependencies
 import fs from 'fs';
 import path from 'path';
 import { db } from './config.js';
@@ -61,6 +62,9 @@ const processDataset = async (filePath) => {
             console.error(`Error saving products ${i + 1} to ${i + chunk.length}: ${error.message}`);
             break; // Exit on error
         }
+
+        // Add a delay between batches to avoid exceeding quotas
+        await delay(500); // 500ms delay
     }
 
     console.log(`All products from ${filePath} have been saved to Firestore.`);
