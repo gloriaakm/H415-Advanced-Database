@@ -1,8 +1,7 @@
-import { db } from './config.js';
 import { collection, query, where, getDocs } from "firebase/firestore";
 
 // Function to retrieve a specific document based on a product_id
-const retrieveSpecificDocument = async (collectionName, product_item) => {
+const retrieveSpecificDocument = async (db, collectionName, product_item) => {
     const collectionRef = collection(db, collectionName);
     const q = query(collectionRef, where("product_id", "==", product_item));
 

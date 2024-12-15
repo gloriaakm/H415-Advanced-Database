@@ -1,25 +1,28 @@
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
-//import { getAnalytics } from "firebase/analytics";
-import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+// Firebase Emulator Configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyAkq1hVXmPn0WUDToDN9AwiBy7S-3eNk8Q",
-  authDomain: "info-f415.firebaseapp.com",
-  projectId: "info-f415",
-  storageBucket: "info-f415.firebasestorage.app",
-  messagingSenderId: "395303504113",
-  appId: "1:395303504113:web:9eaea7b8759424c6cdc150",
-  measurementId: "G-G1N6VZ2LRT"
+  projectId: "info-f415", // Use projectId only for emulator setup; no API key or auth domain needed.
 };
 
-// Initialize Firebase
+// Initialize Firebase App
 const app = initializeApp(firebaseConfig);
-//const analytics = getAnalytics(app);
 
 // Initialize Firestore
-export const db = getFirestore(app);
+const db = getFirestore(app);
+
+// Connect to Firestore Emulator
+connectFirestoreEmulator(db, "localhost", 8080);
+
+// Export the Firestore instance
+export { db };
+
+/* Prerequisites:
+firebase --version
+firebase login
+firebase init emulators (Firestore Emulator)
+firebase emulators:start --only firestore
+(Open another terminal)
+*/

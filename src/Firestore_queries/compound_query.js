@@ -1,7 +1,6 @@
-import { db } from './config.js';
 import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
 
-const compoundQueryTest = async (collectionName, categoryToWorkWith) => {
+const compoundQueryTest = async (db, collectionName, categoryToWorkWith) => {
   const collectionRef = collection(db, collectionName);
   const priceThreshold = 50; // Example price filter
 

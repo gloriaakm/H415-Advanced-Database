@@ -1,9 +1,12 @@
 // config_psql.js
-import { Client } from 'pg';
+import pkg from 'pg';
+const { Client } = pkg;
 
-// Initialize PostgreSQL connection
+// PostgreSQL client setup
 const client = new Client({
-  user: 'postgres',
+  user: 'h415_user',
+  password: '1234',
+  database: 'h415_db'
 });
 
 await client.connect();

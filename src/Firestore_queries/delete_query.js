@@ -1,8 +1,7 @@
-import { db } from './config.js';
 import { collection, query, where, getDocs, deleteDoc } from 'firebase/firestore';
 
 // Function to delete documents based on category
-const deleteDocuments = async (collectionName, categoryToDelete) => {
+const deleteDocuments = async (db, collectionName, categoryToDelete) => {
     const collectionRef = collection(db, collectionName);
     const q = query(collectionRef, where("category", "==", categoryToDelete));
 
