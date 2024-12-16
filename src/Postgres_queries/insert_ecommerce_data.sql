@@ -11,7 +11,7 @@ CREATE TABLE ecommerce_1k (
   date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ecommerce_5k (
+CREATE TABLE ecommerce_2k (
   product_id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description TEXT,
@@ -24,7 +24,7 @@ CREATE TABLE ecommerce_5k (
   date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ecommerce_10k (
+CREATE TABLE ecommerce_4k (
   product_id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description TEXT,
@@ -37,7 +37,7 @@ CREATE TABLE ecommerce_10k (
   date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE ecommerce_100k (
+CREATE TABLE ecommerce_8k (
   product_id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description TEXT,
@@ -49,7 +49,43 @@ CREATE TABLE ecommerce_100k (
   stock INT,
   date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE ecommerce_1m (
+CREATE TABLE ecommerce_16k (
+  product_id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  price DECIMAL(10, 2),
+  category VARCHAR(100),
+  rating DECIMAL(3, 2),
+  reviews JSONB,
+  images TEXT[],
+  stock INT,
+  date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE ecommerce_32k (
+  product_id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  price DECIMAL(10, 2),
+  category VARCHAR(100),
+  rating DECIMAL(3, 2),
+  reviews JSONB,
+  images TEXT[],
+  stock INT,
+  date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE ecommerce_64k (
+  product_id SERIAL PRIMARY KEY,
+  name VARCHAR(255),
+  description TEXT,
+  price DECIMAL(10, 2),
+  category VARCHAR(100),
+  rating DECIMAL(3, 2),
+  reviews JSONB,
+  images TEXT[],
+  stock INT,
+  date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+CREATE TABLE ecommerce_128k (
   product_id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description TEXT,
