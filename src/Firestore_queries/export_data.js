@@ -50,8 +50,8 @@ const processDataset = async (filePath) => {
 
     console.log(`Processing dataset from ${filePath} into collection ${collectionName}...`);
 
-    // Process the data in chunks of 5000
-    const chunkSize = 5000; 
+    // Process the data in chunks of 2500
+    const chunkSize = 2500; 
     for (let i = 0; i < products.length; i += chunkSize) {
         const chunk = products.slice(i, i + chunkSize); // Slice the chunk of products
         console.log(`Processing products ${i + 1} to ${i + chunk.length}...`);
@@ -74,11 +74,13 @@ const processDataset = async (filePath) => {
 const runDatasetProcessing = async () => {
     const datasetFilePaths = [
         './data/ecommerce_1k.json',
-        './data/ecommerce_5k.json',
-        './data/ecommerce_10k.json',
-        './data/ecommerce_100k.json',
-        './data/ecommerce_500k.json',
-        './data/ecommerce_1m.json',
+        './data/ecommerce_2k.json',
+        './data/ecommerce_4k.json',
+        './data/ecommerce_8k.json',
+        './data/ecommerce_16k.json',
+        './data/ecommerce_32k.json',
+        './data/ecommerce_64k.json',
+        './data/ecommerce_128k.json',
     ];
 
     for (const filePath of datasetFilePaths) {

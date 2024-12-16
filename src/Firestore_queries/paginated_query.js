@@ -1,7 +1,8 @@
+import { db } from './config.js';
 import { collection, query, orderBy, limit, startAfter, getDocs } from "firebase/firestore";
 
 // Function to perform paginated query
-const paginatedQueryTest = async (db, collectionName, pageSize, lastDoc) => {
+const paginatedQueryTest = async (collectionName, pageSize, lastDoc) => {
     const collectionRef = collection(db, collectionName);
     let q;
 

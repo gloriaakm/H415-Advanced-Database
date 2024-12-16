@@ -1,6 +1,7 @@
+import { db } from './config.js';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 
-const retrieveDocQuery = async (db, collectionName, productId) => {
+const retrieveDocQuery = async (collectionName, productId) => {
   const collectionRef = collection(db, collectionName);
   const q = query(collectionRef, where("product_id", "==", productId));
 

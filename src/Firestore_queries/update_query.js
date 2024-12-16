@@ -1,7 +1,8 @@
+import { db } from './config.js';
 import { doc, updateDoc } from 'firebase/firestore';
 
 // Function to update the price of a product document
-const updateDocuments = async (db, collectionName, productId, newPrice) => {
+const updateDocuments = async (collectionName, productId, newPrice) => {
     const docRef = doc(db, collectionName, productId);
 
     try {

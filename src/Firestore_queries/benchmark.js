@@ -1,15 +1,11 @@
-import { db } from './config.js';
 import { performance } from 'perf_hooks';
+import { firebaseConfig } from './config.js'; // Firebase app configuration
+import { initializeFirestore } from 'firebase/firestore';
+import { getDatabase, ref, update, onValue } from 'firebase/database'; // For Firebase RTDB
 
-// Import queries
-import retrieveAllQuery from './retrieve_all_query.js';
-import retrieveRecordQuery from './retrieve_record_query.js';
-import retrieveDocQuery from './retrieve_doc_query.js';
-import deleteQuery from './delete_query.js';
-import addQuery from './add_query.js';
-import updateQuery from './update_query.js';
-import compoundQueryTest from './compound_query.js';
-import paginatedQueryTest from './paginated_query.js';
+// Firebase and Firestore-specific operations
+const firestore = initializeFirestore(firebaseConfig, { experimentalForceLongPolling: true });
+const realtimeDB = getDatabase(firebaseConfig);
 
 // Utility function to measure execution time
 const measureTime = async (queryFn, ...args) => {
@@ -37,39 +33,74 @@ const runBenchmark = async (queryFn, queryName, args = [], iterations = 10) => {
   return avgTime;
 };
 
+// Firebase: Simultaneous Real-Time Updates
+const simultaneousUpdatesTest = async (dbRef, numUpdates) => {
+  const updates = {};
+  for (let i = 0; i < numUpdates; i++) {
+    updates[`product_${i}`] = { price: Math.random() * 100 };
+  }
+  await update(ref(realtimeDB, dbRef), updates);
+};
+
+// Firebase: Synchronization Performance
+const synchronizationTest = async (dbRef, numClients) => {
+  const clientRefs = [];
+  for (let i = 0; i < numClients; i++) {
+    clientRefs.push(ref(realtimeDB, `${dbRef}/client_${i}`));
+  }
+
+  const updateTimePromises = clientRefs.map((clientRef) => {
+    return new Promise((resolve) => {
+      onValue(clientRef, () => {
+        const end = performance.now();
+        resolve(end);
+      });
+    });
+  });
+
+  // Perform update
+  const start = performance.now();
+  await update(ref(realtimeDB, dbRef), { syncTest: 'test' });
+  const updateTimes = await Promise.all(updateTimePromises);
+
+  return updateTimes.map((time) => time - start);
+};
+
+// Firestore: Complex Query
+const complexQueryTest = async (db, collection, filterConditions) => {
+  let query = db.collection(collection);
+  filterConditions.forEach(([field, operator, value]) => {
+    query = query.where(field, operator, value);
+  });
+  const result = await query.get();
+  return result.docs.length;
+};
+
+// Firestore: Large Dataset Query
+const largeDatasetTest = async (db, collection, limit) => {
+  const result = await db.collection(collection).limit(limit).get();
+  return result.docs.length;
+};
+
 // Main function
 const main = async () => {
-  const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_100k', 'ecommerce_500k', 'ecommerce_1m'];
-  const product_ids = ['3', '1924', '8124', '456', '129', '42', '67890'];
+  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k']//, 'ecommerce_32k', 'ecommerce_64k', 'ecommerce_128k'];
+  const numUpdates = 100; // Simultaneous updates count
+  const numClients = 10;  // Number of clients for sync test
+  const filterConditions = [['category', '==', 'Electronics'], ['price', '<', 500]];
 
-  for (let i = 0; i < datasetSizes.length; i++) {
-    console.log(`\nBenchmarking on dataset: ${datasetSizes[i]}`);
-
-    // Step 1: Retrieve all documents
-    await runBenchmark(() => retrieveAllQuery(db, datasetSizes[i]), 'Retrieve All Query');
+  for (const dataset of datasetSizes) {
+    console.log(`\nBenchmarking on dataset: ${dataset}`);
     
-    // Step 2: Retrieve a specific record
-    await runBenchmark(() => retrieveRecordQuery(db, datasetSizes[i], product_ids[i]), 'Retrieve Record Query');
-
-    // Step 3: Retrieve a specific document by product_id
-    const retrievedDoc = await retrieveDocQuery(db, datasetSizes[i], product_ids[i]);
-
-    // Step 4: Benchmark deletion of the document
-    await runBenchmark(() => deleteQuery(db, datasetSizes[i], product_ids[i]), 'Delete Query');
+    // Firebase Benchmarks
+    console.log('Firebase Benchmarks:');
+    await runBenchmark(() => simultaneousUpdatesTest(`realtimeDB/${dataset}`, numUpdates), 'Simultaneous Updates Test');
+    await runBenchmark(() => synchronizationTest(`realtimeDB/${dataset}`, numClients), 'Synchronization Test');
     
-    // Step 5: Re-add the deleted document
-    let newDocId = null; // To capture the new document ID
-    const readdDocumentFn = async () => { newDocId = await addQuery(db, datasetSizes[i], retrievedDoc); };
-    await runBenchmark(readdDocumentFn, 'Re-add Query');
-    
-    // Step 6: Benchmark update query
-    await runBenchmark(() => updateQuery(db, datasetSizes[i], newDocId, 299.99), 'Update Query');
-    
-    // Step 7: Benchmark compound query
-    await runBenchmark(() => compoundQueryTest(db, datasetSizes[i], 'Home'), 'Compound Query');
-
-    // Step 8: Benchmark paginated query
-    await runBenchmark(() => paginatedQueryTest(db, datasetSizes[i], 100, null), 'Paginated Query');
+    // Firestore Benchmarks
+    console.log('Firestore Benchmarks:');
+    await runBenchmark(() => complexQueryTest(firestore, dataset, filterConditions), 'Complex Query Test');
+    await runBenchmark(() => largeDatasetTest(firestore, dataset, 1000), 'Large Dataset Query Test');
   }
 };
 
