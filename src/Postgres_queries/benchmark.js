@@ -67,7 +67,7 @@ export const globalAvailabilityTest = async (table) => {
 
 const main = async () => {
   const results = { scalability: [], realTimeSync: [], schemaFlexibility: [], globalAvailability: []  };
-  const tables = ['product_categories', 'products', 'product_reviews', 'product_images'];
+  const tables = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_32k', 'ecommerce_64k', 'ecommerce_128k',];
 
   for (const table of tables) {
     console.log(`Running PostgreSQL benchmarks for table: ${table}`);
