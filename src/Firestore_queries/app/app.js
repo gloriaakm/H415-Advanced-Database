@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, where, limit, startAfter, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -18,6 +18,9 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const productList = document.getElementById("productList");
 let collectionName = "ecommerce_1k"; // Default collection
+let lastVisible = null; // Track the last document loaded for the current query
+const batchSize = 5; // Number of products to load per batch
+let currentQueryFunction = null; // Store the current query function
 
 // Load selected collection
 document.getElementById("loadCollectionButton").addEventListener("click", () => {
@@ -26,6 +29,9 @@ document.getElementById("loadCollectionButton").addEventListener("click", () => 
 
   // Feedback to the user
   productList.innerHTML = `<p>Collection <strong>${collectionName}</strong> loaded. You can now apply filters or search.</p>`;
+  lastVisible = null; // Reset pagination
+  currentQueryFunction = defaultQuery;
+  loadProducts(); // Load initial products for the new collection
 });
 
 // Helper function to render products
@@ -41,36 +47,70 @@ function renderProduct(product) {
   `;
 }
 
-// Fetch products with real-time updates
-async function fetchProducts(queryFunction) {
-  productList.innerHTML = "";
+// Default query to load products
+function defaultQuery(productsRef) {
+  return query(productsRef, orderBy("date_added", "desc"), limit(batchSize));
+}
+
+// Load products based on the current query
+async function loadProducts() {
+  productList.innerHTML = lastVisible ? productList.innerHTML : ""; // Clear the list only on the first load
 
   try {
-    const productsRef = collection(db, collectionName); // Use the current collection
-    const q = queryFunction(productsRef);
+    const productsRef = collection(db, collectionName);
+    const q = currentQueryFunction(productsRef);
 
-    // Real-time listener for updates
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      productList.innerHTML = "";
-      if (snapshot.empty) {
-        productList.innerHTML = "<p>No products found.</p>";
-        return;
-      }
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      if (!lastVisible) productList.innerHTML = "<p>No products found.</p>";
+      return;
+    }
 
-      snapshot.forEach((doc) => {
-        const product = doc.data();
-        productList.innerHTML += renderProduct(product);
-      });
+    // Render products and set the last visible document
+    snapshot.docs.forEach((doc) => {
+      const product = doc.data();
+      productList.innerHTML += renderProduct(product);
     });
 
-    // Optionally return the unsubscribe function if you want to stop listening to changes later
-    return unsubscribe;
+    lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error loading products:", error);
     productList.innerHTML = `<p>Error: ${error.message}</p>`;
   }
 }
+
+// Load more products
+document.getElementById("loadMoreButton").addEventListener("click", async () => {
+  if (!lastVisible) return;
+
+  try {
+    const productsRef = collection(db, collectionName);
+    const q = query(
+      currentQueryFunction(productsRef),
+      startAfter(lastVisible),
+      limit(batchSize)
+    );
+
+    const snapshot = await getDocs(q);
+    if (snapshot.empty) {
+      productList.innerHTML += "<p>No more products to load.</p>";
+      return;
+    }
+
+    // Render products and update the last visible document
+    snapshot.docs.forEach((doc) => {
+      const product = doc.data();
+      productList.innerHTML += renderProduct(product);
+    });
+
+    lastVisible = snapshot.docs[snapshot.docs.length - 1];
+
+  } catch (error) {
+    console.error("Error loading more products:", error);
+    productList.innerHTML += `<p>Error: ${error.message}</p>`;
+  }
+});
 
 // Search Products by Name
 document.getElementById("searchButton").addEventListener("click", () => {
@@ -81,9 +121,11 @@ document.getElementById("searchButton").addEventListener("click", () => {
     return;
   }
 
-  fetchProducts((productsRef) =>
-    query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"))
-  );
+  currentQueryFunction = (productsRef) =>
+    query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"), limit(batchSize));
+
+  lastVisible = null;
+  loadProducts();
 });
 
 // Fetch products by category
@@ -95,9 +137,11 @@ document.getElementById("categoryButton").addEventListener("click", () => {
     return;
   }
 
-  fetchProducts((productsRef) =>
-    query(productsRef, where("category", "array-contains", category))
-  );
+  currentQueryFunction = (productsRef) =>
+    query(productsRef, where("category", "array-contains", category), limit(batchSize));
+
+  lastVisible = null;
+  loadProducts();
 });
 
 // Search by Price Range
@@ -110,9 +154,11 @@ document.getElementById("priceButton").addEventListener("click", () => {
     return;
   }
 
-  fetchProducts((productsRef) =>
-    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice))
-  );
+  currentQueryFunction = (productsRef) =>
+    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice), limit(batchSize));
+
+  lastVisible = null;
+  loadProducts();
 });
 
 // Filter by Rating
@@ -124,22 +170,33 @@ document.getElementById("ratingButton").addEventListener("click", () => {
     return;
   }
 
-  fetchProducts((productsRef) =>
-    query(productsRef, where("rating", ">=", rating))
-  );
+  currentQueryFunction = (productsRef) =>
+    query(productsRef, where("rating", ">=", rating), limit(batchSize));
+
+  lastVisible = null;
+  loadProducts();
 });
 
 // Sort Products
 document.getElementById("sortButton").addEventListener("click", () => {
   const sortOption = document.getElementById("sortSelect").value;
 
-  fetchProducts((productsRef) => {
+  currentQueryFunction = (productsRef) => {
     if (sortOption === "newest") {
-      return query(productsRef, orderBy("date_added", "desc"));
+      return query(productsRef, orderBy("date_added", "desc"), limit(batchSize));
     } else if (sortOption === "price-asc") {
-      return query(productsRef, orderBy("price", "asc"));
+      return query(productsRef, orderBy("price", "asc"), limit(batchSize));
     } else if (sortOption === "price-desc") {
-      return query(productsRef, orderBy("price", "desc"));
+      return query(productsRef, orderBy("price", "desc"), limit(batchSize));
     }
-  });
+  };
+
+  lastVisible = null;
+  loadProducts();
+});
+
+// Load initial products when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+  currentQueryFunction = defaultQuery;
+  loadProducts();
 });
