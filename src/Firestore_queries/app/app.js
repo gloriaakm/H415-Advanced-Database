@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, where, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -82,7 +82,7 @@ document.getElementById("searchButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"), limit(5))
+    query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"))
   );
 });
 
@@ -96,7 +96,7 @@ document.getElementById("categoryButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("category", "array-contains", category), limit(5))
+    query(productsRef, where("category", "array-contains", category))
   );
 });
 
@@ -111,7 +111,7 @@ document.getElementById("priceButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice), limit(5))
+    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice))
   );
 });
 
@@ -125,7 +125,7 @@ document.getElementById("ratingButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("rating", ">=", rating), limit(5))
+    query(productsRef, where("rating", ">=", rating))
   );
 });
 
@@ -135,11 +135,11 @@ document.getElementById("sortButton").addEventListener("click", () => {
 
   fetchProducts((productsRef) => {
     if (sortOption === "newest") {
-      return query(productsRef, orderBy("date_added", "desc"), limit(5));
+      return query(productsRef, orderBy("date_added", "desc"));
     } else if (sortOption === "price-asc") {
-      return query(productsRef, orderBy("price", "asc"), limit(5));
+      return query(productsRef, orderBy("price", "asc"));
     } else if (sortOption === "price-desc") {
-      return query(productsRef, orderBy("price", "desc"), limit(5));
+      return query(productsRef, orderBy("price", "desc"));
     }
   });
 });
