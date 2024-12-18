@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Firebase E-commerce</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header>
+    <h1>Welcome to the E-commerce App</h1>
+  </header>
+
+  <main>
+    <!-- Collection Selector -->
+    <h2>Choose a Collection</h2>
+    <div class="collection-selector">
+      <select id="collectionSelect">
+        <option value="ecommerce_1k">E-commerce 1K</option>
+        <option value="ecommerce_2k">E-commerce 2K</option>
+        <option value="ecommerce_4k">E-commerce 4K</option>
+        <option value="ecommerce_8k">E-commerce 8K</option>
+        <option value="ecommerce_16k">E-commerce 16K</option>
+        <option value="ecommerce_25k">E-commerce 25K</option>
+      </select>
+      <button id="loadCollectionButton">Load Collection</button>
+    </div>
+
+    <!-- Search Product by Name -->
+    <section class="search-section">
+      <h2>Search Products</h2>
+      <div class="search-bar">
+        <input type="text" id="searchTerm" placeholder="Search by product name">
+        <button id="searchButton">Search</button>
+      </div>
+    </section>
+
+    <!-- Search Product by Category -->
+    <section class="category-section">
+      <h2>Filter by Category</h2>
+      <div class="category-filter">
+        <select id="categorySelect">
+          <option value="Electronics">Electronics</option>
+          <option value="Clothing">Clothing</option>
+          <option value="Books">Books</option>
+          <option value="Home">Home</option>
+          <option value="Toys">Toys</option>
+        </select>
+        <button id="categoryButton">Search by Category</button>
+      </div>
+    </section>
+
+    <!-- Search by Price Range -->
+    <section class="price-section">
+      <h2>Filter by Price Range</h2>
+      <div class="price-filter">
+        <input type="number" id="minPrice" placeholder="Min Price", min="0">
+        <input type="number" id="maxPrice" placeholder="Max Price", min="0">
+        <button id="priceButton">Search by Price</button>
+      </div>
+    </section>
+
+    <!-- Filter by Rating -->
+    <section class="rating-section">
+      <h2>Filter by Rating</h2>
+      <div class="rating-filter">
+        <select id="ratingSelect">
+          <option value="4">4 +</option>
+          <option value="3">3 +</option>
+          <option value="2">2 +</option>
+          <option value="1">1 +</option>
+        </select>
+        <button id="ratingButton">Search by Rating</button>
+      </div>
+    </section>
+
+    <!-- Sort Products -->
+    <section class="sort-section">
+      <h2>Sort Products</h2>
+      <div class="sort-filter">
+        <select id="sortSelect">
+          <option value="newest">Newest</option>
+          <option value="price-asc">Price: Low to High</option>
+          <option value="price-desc">Price: High to Low</option>
+        </select>
+        <button id="sortButton">Sort Products</button>
+      </div>
+    </section>
+
+    <!-- Display Products -->
+    <section id="productList" class="product-list">
+      <h2>Product List</h2>
+      <!-- Products will be dynamically inserted here -->
+    </section>
+  
+  </main>
+
+  <footer>
+    <p>&copy; 2024 E-commerce App. All rights reserved.</p>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

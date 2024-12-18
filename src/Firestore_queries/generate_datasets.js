@@ -74,14 +74,12 @@ const generateDatasetInChunks = async (size, filename, chunkSize = 10000) => {
 
 // Generate datasets
 const datasetSizes = [
-    { size: 1000, filename: 'ecommerce_1k.json' },
-    { size: 2000, filename: 'ecommerce_2k.json' },
-    { size: 4000, filename: 'ecommerce_4k.json' },
-    { size: 8000, filename: 'ecommerce_8k.json' },
-    { size: 16000, filename: 'ecommerce_16k.json' },
-    { size: 32000, filename: 'ecommerce_32k.json' },
-    { size: 64000, filename: 'ecommerce_64k.json' },
-    { size: 120000, filename: 'ecommerce_128k.json' },
+    //{ size: 1000, filename: 'ecommerce_1k.json' },
+    //{ size: 2000, filename: 'ecommerce_2k.json' },
+    //{ size: 4000, filename: 'ecommerce_4k.json' },
+    //{ size: 8000, filename: 'ecommerce_8k.json' },
+    //{ size: 16000, filename: 'ecommerce_16k.json' },
+    { size: 25000, filename: 'ecommerce_25k.json' },
 ];
 
 (async () => {

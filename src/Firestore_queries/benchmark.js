@@ -1,103 +1,128 @@
 // benchmark.js
 import { db, realtimeDB } from './config.js';
 import { performance } from "perf_hooks";
-import { collection } from "firebase/firestore";
-import { addDoc } from "firebase/firestore";
+import { getDocs, collection, query, where, limit, setDoc, doc, updateDoc } from "firebase/firestore";
+import { ref, update, goOffline, goOnline, onValue } from "firebase/database";
 
-// Scalability & Load Testing
-const scalabilityTest = async (numRequests) => {
-  const writeTimes = [];
-  for (let i = 0; i < 6; i++) {  // Run the test 6 times (discard first run)
-    const start = performance.now();
-    for (let j = 0; j < numRequests; j++) {
-      await addDoc(collection(db, "products"), {
-        name: `Product ${j}`,
-        price: Math.random() * 100,
-        timestamp: new Date()
-      });
-    }
-    const end = performance.now();
-    if (i > 0) writeTimes.push(end - start); // Discard the first execution
+const testSchemaLessStructure = async () => {
+  const startTime = performance.now();
+  const testData = {
+    doc_1: { field1: "value1", field2: 123 },
+    doc_2: { fieldA: ["list", "of", "values"], fieldB: { nested: "object" } },
+  };
+
+  for (const [docId, docData] of Object.entries(testData)) {
+    await setDoc(doc(db, "schema_less_test", docId), docData);
   }
-  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+  const endTime = performance.now();
+  console.log("Schema-less structure test completed.");
+  return endTime - startTime;
 };
 
-// Real-Time Synchronization (Multi-Client Updates)
-const realTimeSyncTest = async () => {
-  const productRef = collection(db, "products");
-  const writeTimes = [];
-  for (let i = 0; i < 6; i++) {  // Run the test 6 times
-    const start = performance.now();
-    // Simulate concurrent writes/updates to the same product
-    await addDoc(productRef, { name: `Product RealTime`, price: Math.random() * 100 });
-    const end = performance.now();
-    if (i > 0) writeTimes.push(end - start); // Discard the first execution
-  }
-  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+const testRealTimeSync = async () => {
+  const startTime = performance.now();
+  const syncRef = ref(realtimeDB, "real_time_sync_test");
+  const data = { key1: "value1", key2: "value2" };
+
+  const listener = (snapshot) => {
+    console.log("Realtime update received:", snapshot.val());
+  };
+
+  onValue(syncRef, listener);
+  await update(syncRef, data);
+  await new Promise((resolve) => setTimeout(resolve, 2000)); // Allow time for sync to occur
+  const endTime = performance.now();
+  console.log("Real-time synchronization test completed.");
+  return endTime - startTime;
 };
 
-// Unstructured Data & Schema Flexibility
-const schemaFlexibilityTest = async (numRequests) => {
-  const writeTimes = [];
-  for (let i = 0; i < 6; i++) {  // Run the test 6 times
-    const start = performance.now();
-    for (let j = 0; j < numRequests; j++) {
-      await addDoc(collection(db, "products"), {
-        name: `Product ${j}`,
-        price: Math.random() * 100,
-        extraInfo: { color: "red", size: "M" },  // Unstructured data
-        timestamp: new Date()
-      });
-    }
-    const end = performance.now();
-    if (i > 0) writeTimes.push(end - start); // Discard the first execution
-  }
-  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+const testOfflineCapabilities = async () => {
+  const startTime = performance.now();
+  const offlineRef = ref(realtimeDB, "offline_test");
+  const data = { offline_key: "offline_value" };
+
+  goOffline(realtimeDB);
+  await update(offlineRef, data);
+  console.log("Data written offline.");
+
+  goOnline(realtimeDB);
+  console.log("Reconnected and data synced.");
+  const endTime = performance.now();
+  return endTime - startTime;
 };
 
-// Global Availability, Replication & Latency
-const globalAvailabilityTest = async (dataset) => {
-  const writeTimes = [];
-  for (let i = 0; i < 6; i++) {  // Run the test 6 times
-    const start = performance.now();
-    // Simulate multi-region writes (Firestore handles this natively)
-    await addDoc(collection(db, dataset), {
-      name: `Smartphone`,
-      price: Math.random() * 100,
-      timestamp: new Date()
-    });
-    const end = performance.now();
-    if (i > 0) writeTimes.push(end - start); // Discard the first execution
+const testFlexibleDataModel = async () => {
+  const startTime = performance.now();
+  const docData = {
+    user: {
+      name: "John Doe",
+      age: 30,
+      preferences: { theme: "dark", notifications: true },
+    },
+    orders: [
+      { order_id: "001", amount: 250.75 },
+      { order_id: "002", amount: 450.50 },
+    ],
+  };
+
+  await setDoc(doc(db, "flexible_model_test", "user_1"), docData);
+  console.log("Flexible data model test completed.");
+  const endTime = performance.now();
+  return endTime - startTime;
+};
+
+const testQueryCapabilities = async () => {
+  const startTime = performance.now();
+  const collectionRef = collection(db, "query_test");
+
+  for (let i = 0; i < 10; i++) {
+    await setDoc(doc(collectionRef, `doc_${i}`), { value: i * 10 });
   }
-  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+
+  const queryResult = query(collectionRef, where("value", ">=", 50));
+  const docs = await getDocs(queryResult);
+  const results = docs.docs.map((doc) => doc.data());
+  console.log("Query results:", results);
+  const endTime = performance.now();
+  return endTime - startTime;
+};
+
+const testScaling = async () => {
+  const startTime = performance.now();
+  const collectionRef = collection(db, "scaling_test");
+
+  for (let i = 0; i < 1000; i++) {
+    await setDoc(doc(collectionRef, `doc_${i}`), { field: `value_${i}` });
+  }
+
+  console.log("Automatic scaling test completed.");
+  const endTime = performance.now();
+  return endTime - startTime;
 };
 
 const main = async () => {
-  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k']//, 'ecommerce_32k', 'ecommerce_64k', 'ecommerce_128k'];
-
-  const results = { scalability: [], realTimeSync: [], schemaFlexibility: [], globalAvailability: []};
+  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
+  const results = {
+    schema_less_structure: [],
+    real_time_sync: [],
+    offline_capabilities: [],
+    flexible_data_model: [],
+    query_capabilities: [],
+    scaling: [],
+  };
 
   for (const dataset of datasetSizes) {
     console.log(`\nBenchmarking on dataset: ${dataset}`);
-    const scalabilityTime = await scalabilityTest(dataset, 1000);  // Test with 1000 writes
-    const realTimeSyncTime = await realTimeSyncTest(dataset);
-    const schemaFlexTime = await schemaFlexibilityTest(dataset, 1000);  // Test with 1000 writes
-    const globalAvailabilityTime = await globalAvailabilityTest(dataset);
-
-  
-    console.log(`Firestore Benchmark Results:`);
-    console.log(`Scalability Test Time (1000 writes): ${scalabilityTime.toFixed(2)} ms`);
-    console.log(`Real-Time Sync Test Time: ${realTimeSyncTime.toFixed(2)} ms`);
-    console.log(`Schema Flexibility Test Time (1000 writes): ${schemaFlexTime.toFixed(2)} ms`);
-    console.log(`Global Availability Test Time: ${globalAvailabilityTime.toFixed(2)} ms`);
-
-    results.scalability.push(scalabilityTime);
-    results.realTimeSync.push(realTimeSyncTime);
-    results.schemaFlexibility.push(schemaFlexTime);
-    results.globalAvailability.push(globalAvailabilityTime);
+    results.schema_less_structure.push(await testSchemaLessStructure());
+    results.real_time_sync.push(await testRealTimeSync());
+    results.offline_capabilities.push(await testOfflineCapabilities());
+    results.flexible_data_model.push(await testFlexibleDataModel());
+    results.query_capabilities.push(await testQueryCapabilities());
+    results.scaling.push(await testScaling());
   }
 
   console.log(results);
 };
 
 main().catch((error) => console.error('Error during benchmarking:', error));
+

@@ -37,20 +37,19 @@ const saveProductsToFirestore = async (products, collectionName) => {
     });
 };
 
-// Function to read and process dataset in chunks
 const processDataset = async (filePath) => {
     // Read the file and parse the data
     const rawData = fs.readFileSync(filePath);
     const products = JSON.parse(rawData);
 
-    // Get collection name from the filename (e.g., 'ecommerce_100k' from 'ecommerce_100k.json')
+    // Get collection name from the filename (e.g., 'ecommerce_1k' from 'ecommerce_2k.json')
     const collectionName = path.basename(filePath, '.json');
 
     console.log(`Processing dataset from ${filePath} into collection ${collectionName}...`);
 
     // Process the data in chunks of 2500
     const chunkSize = 2500; 
-    for (let i = 5000; i < products.length; i += chunkSize) {
+    for (let i = 0; i < products.length; i += chunkSize) {
         const chunk = products.slice(i, i + chunkSize); // Slice the chunk of products
         console.log(`Processing products ${i + 1} to ${i + chunk.length}...`);
 
@@ -68,25 +67,21 @@ const processDataset = async (filePath) => {
     console.log(`All products from ${filePath} have been saved to Firestore.`);
 };
 
-// Main function to process multiple datasets
 const runDatasetProcessing = async () => {
     const datasetFilePaths = [
         //'./data/ecommerce_1k.json',
         //'./data/ecommerce_2k.json',
         //'./data/ecommerce_4k.json',
         //'./data/ecommerce_8k.json',
-        './data/ecommerce_16k.json',
-        //'./data/ecommerce_32k.json',
-        //'./data/ecommerce_64k.json',
-        //'./data/ecommerce_128k.json',
+        //'./data/ecommerce_16k.json', from 5000
+        './data/ecommerce_25k.json',
     ];
 
     for (const filePath of datasetFilePaths) {
-        await processDataset(filePath); // Process each dataset file
+        await processDataset(filePath); 
     }
 };
 
-// Execute the script
 runDatasetProcessing().catch((error) => {
     console.error('Error processing datasets:', error);
 });

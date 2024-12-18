@@ -61,31 +61,7 @@ CREATE TABLE ecommerce_16k (
   stock INT,
   date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE ecommerce_32k (
-  product_id SERIAL PRIMARY KEY,
-  name VARCHAR(255),
-  description TEXT,
-  price DECIMAL(10, 2),
-  category VARCHAR(100),
-  rating DECIMAL(3, 2),
-  reviews JSONB,
-  images TEXT[],
-  stock INT,
-  date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE ecommerce_64k (
-  product_id SERIAL PRIMARY KEY,
-  name VARCHAR(255),
-  description TEXT,
-  price DECIMAL(10, 2),
-  category VARCHAR(100),
-  rating DECIMAL(3, 2),
-  reviews JSONB,
-  images TEXT[],
-  stock INT,
-  date_added TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
-);
-CREATE TABLE ecommerce_128k (
+CREATE TABLE ecommerce_25k (
   product_id SERIAL PRIMARY KEY,
   name VARCHAR(255),
   description TEXT,

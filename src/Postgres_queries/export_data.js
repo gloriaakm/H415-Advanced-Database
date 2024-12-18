@@ -82,13 +82,11 @@ const insertBulkData = async (datasetSize) => {
 };
 
 // Insert datasets of different sizes
-//await insertBulkData(1000);    // Insert 1k products into ecommerce_1k
-//await insertBulkData(2000);    // Insert 5k products into ecommerce_2k
-//await insertBulkData(4000);    // Insert 10k products into ecommerce_4k
-//await insertBulkData(8000);    // Insert 50k products into ecommerce_8k
-//await insertBulkData(16000);   // Insert 100k products into ecommerce_16k
-//await insertBulkData(32000);   // Insert 500k products into ecommerce_32k
-await insertBulkData(64000);   // Insert 1M products into ecommerce_64k
-//await insertBulkData(128000); // Insert 1M products into ecommerce_128k
+//await insertBulkData(1000); 
+//await insertBulkData(2000); 
+//await insertBulkData(4000); 
+//await insertBulkData(8000); 
+//await insertBulkData(16000);
+await insertBulkData(25000);
 
 await client.end();

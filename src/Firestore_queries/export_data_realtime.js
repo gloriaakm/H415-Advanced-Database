@@ -71,25 +71,21 @@ const processDataset = async (filePath) => {
     console.log(`All products from ${filePath} have been saved to Realtime Database.`);
 };
 
-// Main function to process multiple datasets
 const runDatasetProcessing = async () => {
     const datasetFilePaths = [
-        './data/ecommerce_1k.json',
-        './data/ecommerce_2k.json',
-        './data/ecommerce_4k.json',
-        './data/ecommerce_8k.json',
-        './data/ecommerce_16k.json',
-        './data/ecommerce_32k.json',
-        './data/ecommerce_64k.json',
-        './data/ecommerce_128k.json',
+        //'./data/ecommerce_1k.json',
+        //'./data/ecommerce_2k.json',
+        //'./data/ecommerce_4k.json',
+        //'./data/ecommerce_8k.json',
+        //'./data/ecommerce_16k.json',
+        './data/ecommerce_25k.json',
     ];
 
     for (const filePath of datasetFilePaths) {
-        await processDataset(filePath); // Process each dataset file
+        await processDataset(filePath);
     }
 };
 
-// Execute the script
 runDatasetProcessing().catch((error) => {
     console.error('Error processing datasets:', error);
 });

@@ -15,9 +15,6 @@ export const firebaseConfig = {
   measurementId: "G-XK1XKYMLEM"
 };
 
-// Initialize Firebase and Firestore
-const app = initializeApp(firebaseConfig);
-
-// Initialize Firestore and Realtime Database
+export const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);        // Firestore instance
 export const realtimeDB = getDatabase(app);  // Realtime Database instance
