@@ -1,5 +1,4 @@
 import pkg from 'pg';
-import { performance } from 'perf_hooks';
 const { Client } = pkg;
 
 const client = new Client({

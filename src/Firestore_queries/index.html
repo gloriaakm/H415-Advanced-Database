@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Benchmark Firebase</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <h1>Résultats des Benchmarks Firestore</h1>
+  
+  <!-- Zones pour les résultats -->
+  <div>
+    <h2>Scalability Test</h2>
+    <canvas id="scalabilityChart" width="400" height="200"></canvas>
+  </div>
+
+  <div>
+    <h2>Real-Time Sync Test</h2>
+    <canvas id="realTimeChart" width="400" height="200"></canvas>
+  </div>
+
+  <div>
+    <h2>Schema Flexibility Test</h2>
+    <canvas id="schemaChart" width="400" height="200"></canvas>
+  </div>
+
+  <div>
+    <h2>Global Availability Test</h2>
+    <canvas id="globalChart" width="400" height="200"></canvas>
+  </div>
+
+
+  <!-- Import Firebase & Ton Script Benchmark -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+    import { scalabilityTest, realTimeSyncTest, schemaFlexibilityTest, globalAvailabilityTest } from './benchmark.js';
+
+
+    // Configuration Firebase
+    const firebaseConfig = {
+      apiKey: "AIzaSyAwHs-mFSlSMR1ap09noDvMcgtlLiZ2hHI",
+      authDomain: "h415-98f20.firebaseapp.com",
+      databaseURL: "https://h415-98f20-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "h415-98f20",
+      storageBucket: "h415-98f20.firebasestorage.app",
+      messagingSenderId: "325975965064",
+      appId: "1:325975965064:web:a45015bef3e8d4f64e4e3d",
+      measurementId: "G-XK1XKYMLEM"
+    };
+
+    // Initialisation Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Exécution de Benchmark
+    const displayChart = (canvasId, label, result) => {
+      const ctx = document.getElementById(canvasId).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: [label],
+          datasets: [{
+            label: 'Résultat (en ms)',
+            data: [result],
+            backgroundColor: ['rgba(75, 192, 192, 0.2)'],
+            borderColor: ['rgba(75, 192, 192, 1)'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    };
+
+    // Exécution de Benchmark
+    const runTestsAndDisplayResults = async () => {
+      try {
+        console.log("Benchmark start...");
+        const scalabilityResult = await scalabilityTest(100);
+        const realTimeResult = await realTimeSyncTest();
+        const schemaResult = await schemaFlexibilityTest(100);
+        const globalResult = await globalAvailabilityTest("ecommerce_1k");
+
+        console.log("Scalability Test Result:", scalabilityResult);
+        console.log("Real-Time Sync Test Result:", realTimeResult);
+        console.log("Schema Flexibility Test Result:", schemaResult);
+        console.log("Global Availability Test Result:", globalResult);
+
+        // Affichage des résultats dans les graphiques
+        displayChart('scalabilityChart', 'Scalability', scalabilityResult);
+        displayChart('realTimeChart', 'Real-Time Sync', realTimeResult);
+        displayChart('schemaChart', 'Schema Flexibility', schemaResult);
+        displayChart('globalChart', 'Global Availability', globalResult);
+
+        console.log("Benchmark finished");
+      } catch (error) {
+        console.error("Erreur pendant les tests :", error);
+      }
+    };
+
+    // Lancer les tests et afficher les résultats
+    runTestsAndDisplayResults();
+  </script>
+</body>
+</html>

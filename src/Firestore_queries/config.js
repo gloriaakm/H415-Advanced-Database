@@ -1,7 +1,7 @@
 // Import the necessary Firebase modules
-import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";  // Firestore import
-import { getDatabase } from "firebase/database";    // Realtime Database import
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+//import { getDatabase } from "firebase/database";    // Realtime Database import
 
 // Firebase configuration
 export const firebaseConfig = {
@@ -15,6 +15,9 @@ export const firebaseConfig = {
   measurementId: "G-XK1XKYMLEM"
 };
 
-export const app = initializeApp(firebaseConfig);
+// Initialize Firebase and Firestore
+const app = initializeApp(firebaseConfig);
+
+// Initialize Firestore and Realtime Database
 export const db = getFirestore(app);        // Firestore instance
-export const realtimeDB = getDatabase(app);  // Realtime Database instance
+//export const realtimeDB = getDatabase(app);  // Realtime Database instance
