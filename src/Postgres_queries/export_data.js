@@ -26,7 +26,7 @@ const generateProductData = (count) => {
       categories[Math.floor(Math.random() * categories.length)],
       (Math.random() * 5).toFixed(2),
       JSON.stringify([`Review ${i}`]),
-      `{${images[Math.floor(Math.random() * images.length)]}, ${images[Math.floor(Math.random() * images.length)]}}`, // Use a valid PostgreSQL array format
+      `{${images[Math.floor(Math.random() * images.length)]}, ${images[Math.floor(Math.random() * images.length)]}}`,
       Math.floor(Math.random() * 500),
       new Date().toISOString()
     ]);
@@ -47,7 +47,7 @@ const insertBulkData = async (datasetSize) => {
     VALUES
   `;
 
-  // Split data into smaller batches (e.g., 1000 products per batch)
+  // Split data into smaller batches
   const batchSize = 1000;
   let batchStart = 0;
   const totalBatches = Math.ceil(products.length / batchSize);
@@ -64,29 +64,27 @@ const insertBulkData = async (datasetSize) => {
     batchProducts.forEach((product, index) => {
       const offset = index * 9;
       valuePlaceholders.push(`($${offset + 1}, $${offset + 2}, $${offset + 3}, $${offset + 4}, $${offset + 5}, $${offset + 6}, $${offset + 7}, $${offset + 8}, $${offset + 9})`);
-      queryValues.push(...product); // Push each product's 9 values
+      queryValues.push(...product);
     });
 
     const fullQuery = queryBase + valuePlaceholders.join(', ');
 
     try {
-      // Execute the batch insert
       await client.query(fullQuery, queryValues);
       console.log(`Batch ${batchIndex + 1} inserted successfully.`);
     } catch (error) {
       console.error('Error during bulk insert', error);
     }
 
-    batchStart = batchEnd; // Move to the next batch
+    batchStart = batchEnd;
   }
 };
 
-// Insert datasets of different sizes
 //await insertBulkData(1000); 
 //await insertBulkData(2000); 
 //await insertBulkData(4000); 
 //await insertBulkData(8000); 
 //await insertBulkData(16000);
-await insertBulkData(25000);
+//await insertBulkData(25000);
 
 await client.end();

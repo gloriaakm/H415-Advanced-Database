@@ -1,12 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { realtimeDB } from './config.js'; // Import the Realtime Database reference
-import { ref, update } from 'firebase/database'; // Import Realtime DB functions
+import { realtimeDB } from './config.js';
+import { ref, update } from 'firebase/database'; 
 
-// Helper function to introduce a delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-// Retry mechanism with exponential backoff
 const retryWithBackoff = async (fn, retries = 5, delayMs = 100) => {
     for (let i = 0; i < retries; i++) {
         try {
@@ -23,7 +21,6 @@ const retryWithBackoff = async (fn, retries = 5, delayMs = 100) => {
     }
 };
 
-// Helper function to save products to Realtime Database
 const saveProductsToRealtimeDB = async (products, dbRef) => {
     await retryWithBackoff(async () => {
         const updates = {};
@@ -33,18 +30,15 @@ const saveProductsToRealtimeDB = async (products, dbRef) => {
             updates[`/${dbRef}/${product.product_id}`] = product;
         });
 
-        // Update the Realtime DB with the products
         await update(ref(realtimeDB), updates);
     });
 };
 
-// Function to read and process dataset in chunks
 const processDataset = async (filePath) => {
-    // Read the file and parse the data
     const rawData = fs.readFileSync(filePath);
     const products = JSON.parse(rawData);
 
-    // Get collection name from the filename (e.g., 'ecommerce_100k' from 'ecommerce_100k.json')
+    // Get collection name from the filename
     const collectionName = path.basename(filePath, '.json');
     const dbRef = `products/${collectionName}`; // Define Realtime DB reference
 
@@ -57,14 +51,11 @@ const processDataset = async (filePath) => {
         console.log(`Processing products ${i + 1} to ${i + chunk.length}...`);
 
         try {
-            // Save the chunk to Realtime Database
-            await saveProductsToRealtimeDB(chunk, dbRef); // Save to Realtime Database
+            await saveProductsToRealtimeDB(chunk, dbRef);
         } catch (error) {
             console.error(`Error saving products ${i + 1} to ${i + chunk.length}: ${error.message}`);
             break; // Exit on error
         }
-
-        // Add a delay between batches to avoid exceeding quotas
         await delay(500); // 500ms delay
     }
 
@@ -78,7 +69,7 @@ const runDatasetProcessing = async () => {
         //'./data/ecommerce_4k.json',
         //'./data/ecommerce_8k.json',
         //'./data/ecommerce_16k.json',
-        './data/ecommerce_25k.json',
+        //'./data/ecommerce_25k.json',
     ];
 
     for (const filePath of datasetFilePaths) {

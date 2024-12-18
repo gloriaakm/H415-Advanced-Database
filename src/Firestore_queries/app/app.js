@@ -19,8 +19,9 @@ const db = getFirestore(app);
 const productList = document.getElementById("productList");
 let collectionName = "ecommerce_1k"; // Default collection
 let lastVisible = null; // Track the last document loaded for the current query
-const batchSize = 5; // Number of products to load per batch
+const batchSize = 3; // Number of products to load per batch
 let currentQueryFunction = null; // Store the current query function
+let unsubscribe = null; // Store the unsubscribe function for onSnapshot
 
 // Load selected collection
 document.getElementById("loadCollectionButton").addEventListener("click", () => {
@@ -31,6 +32,7 @@ document.getElementById("loadCollectionButton").addEventListener("click", () => 
   productList.innerHTML = `<p>Collection <strong>${collectionName}</strong> loaded. You can now apply filters or search.</p>`;
   lastVisible = null; // Reset pagination
   currentQueryFunction = defaultQuery;
+  if (unsubscribe) unsubscribe(); // Stop any previous listener
   loadProducts(); // Load initial products for the new collection
 });
 
@@ -60,19 +62,31 @@ async function loadProducts() {
     const productsRef = collection(db, collectionName);
     const q = currentQueryFunction(productsRef);
 
-    const snapshot = await getDocs(q);
-    if (snapshot.empty) {
-      if (!lastVisible) productList.innerHTML = "<p>No products found.</p>";
-      return;
+    // Set up real-time listener for the initial query
+    if (!lastVisible) {
+      unsubscribe = onSnapshot(q, (snapshot) => {
+        productList.innerHTML = ""; // Clear the list before rendering updates
+        snapshot.docs.forEach((doc) => {
+          const product = doc.data();
+          productList.innerHTML += renderProduct(product);
+        });
+        lastVisible = snapshot.docs[snapshot.docs.length - 1];
+      });
+    } else {
+      const snapshot = await getDocs(q);
+      if (snapshot.empty) {
+        if (!lastVisible) productList.innerHTML = "<p>No products found.</p>";
+        return;
+      }
+
+      // Render products and set the last visible document
+      snapshot.docs.forEach((doc) => {
+        const product = doc.data();
+        productList.innerHTML += renderProduct(product);
+      });
+
+      lastVisible = snapshot.docs[snapshot.docs.length - 1];
     }
-
-    // Render products and set the last visible document
-    snapshot.docs.forEach((doc) => {
-      const product = doc.data();
-      productList.innerHTML += renderProduct(product);
-    });
-
-    lastVisible = snapshot.docs[snapshot.docs.length - 1];
 
   } catch (error) {
     console.error("Error loading products:", error);
@@ -125,6 +139,7 @@ document.getElementById("searchButton").addEventListener("click", () => {
     query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"), limit(batchSize));
 
   lastVisible = null;
+  if (unsubscribe) unsubscribe();
   loadProducts();
 });
 
@@ -141,6 +156,7 @@ document.getElementById("categoryButton").addEventListener("click", () => {
     query(productsRef, where("category", "array-contains", category), limit(batchSize));
 
   lastVisible = null;
+  if (unsubscribe) unsubscribe();
   loadProducts();
 });
 
@@ -158,6 +174,7 @@ document.getElementById("priceButton").addEventListener("click", () => {
     query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice), limit(batchSize));
 
   lastVisible = null;
+  if (unsubscribe) unsubscribe();
   loadProducts();
 });
 
@@ -174,6 +191,7 @@ document.getElementById("ratingButton").addEventListener("click", () => {
     query(productsRef, where("rating", ">=", rating), limit(batchSize));
 
   lastVisible = null;
+  if (unsubscribe) unsubscribe();
   loadProducts();
 });
 
@@ -192,6 +210,7 @@ document.getElementById("sortButton").addEventListener("click", () => {
   };
 
   lastVisible = null;
+  if (unsubscribe) unsubscribe();
   loadProducts();
 });
 

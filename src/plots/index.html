@@ -26,7 +26,6 @@
   <canvas id="largeDatasetQueryChart" width="400" height="200"></canvas>
 
   <script>
-    // Example data for PostgreSQL and Firestore (replace with your real benchmark data)
     const results = {
       simultaneousUpdates: {
         postgres: [
@@ -107,7 +106,7 @@
     };
 
     // Labels for the x-axis (dataset sizes)
-    const datasetLabels = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k'];
+    const datasetLabels = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
 
     // Function to create a bar chart for each benchmark test
     const createChart = (canvasId, title, postgresData, firestoreData) => {

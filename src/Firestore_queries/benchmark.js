@@ -1,128 +1,151 @@
-// benchmark.js
-import { db, realtimeDB } from './config.js';
-import { performance } from "perf_hooks";
-import { getDocs, collection, query, where, limit, setDoc, doc, updateDoc } from "firebase/firestore";
-import { ref, update, goOffline, goOnline, onValue } from "firebase/database";
+import { db } from './config.js';
+import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, enableIndexedDbPersistence } from 'firebase/firestore';
 
-const testSchemaLessStructure = async () => {
-  const startTime = performance.now();
-  const testData = {
-    doc_1: { field1: "value1", field2: 123 },
-    doc_2: { fieldA: ["list", "of", "values"], fieldB: { nested: "object" } },
-  };
+// Utility functions
+const getRandomValue = (array) => array[Math.floor(Math.random() * array.length)];
+const getRandomNumber = (min, max) => Math.random() * (max - min) + min;
 
-  for (const [docId, docData] of Object.entries(testData)) {
-    await setDoc(doc(db, "schema_less_test", docId), docData);
-  }
-  const endTime = performance.now();
-  console.log("Schema-less structure test completed.");
-  return endTime - startTime;
+// Sample data arrays
+const sampleNames = ["Product A", "Product B", "Product C"];
+const sampleDescriptions = ["High quality", "Best seller", "Limited edition"];
+const categories = ["Electronics", "Home", "Beauty"];
+const sampleImages = ["image1.jpg", "image2.jpg", "image3.jpg"];
+
+// Function to generate a single product
+const generateProduct = (id) => ({
+  product_id: id.toString(),
+  name: getRandomValue(sampleNames),
+  description: getRandomValue(sampleDescriptions),
+  price: parseFloat(getRandomNumber(5, 500).toFixed(2)),
+  category: [getRandomValue(categories)],
+  rating: parseFloat(getRandomNumber(1, 5).toFixed(1)),
+  reviews: Array.from({ length: Math.floor(getRandomNumber(1, 10)) }, () => ({
+    user: `user${Math.floor(getRandomNumber(1, 1000))}`,
+    comment: getRandomValue(sampleDescriptions),
+    rating: parseFloat(getRandomNumber(1, 5).toFixed(1)),
+  })),
+  images: [getRandomValue(sampleImages), getRandomValue(sampleImages)],
+  stock: Math.floor(getRandomNumber(0, 500)),
+  date_added: new Date(Date.now() - Math.floor(getRandomNumber(0, 1e10))).toISOString(),
+});
+
+// Dataset sizes
+const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
+
+// Utility function to run a benchmark multiple times and return the average time
+const runMultipleTimes = async (func, dataset, times = 6) => {
+    const results = [];
+    for (let i = 0; i < times; i++) {
+        const result = await func(dataset, `benchmark_func_${func.name}_${i}`);
+        results.push(result);
+    }
+    // Calculate the average
+    const averageTime = results.reduce((sum, value) => sum + value, 0) / results.length;
+    return averageTime;
 };
 
-const testRealTimeSync = async () => {
-  const startTime = performance.now();
-  const syncRef = ref(realtimeDB, "real_time_sync_test");
-  const data = { key1: "value1", key2: "value2" };
+// Updated Flexible Data Model Benchmark to include multiple runs
+const flexibleDataModelTest = async (dataset, id) => {
+    const start = performance.now();
 
-  const listener = (snapshot) => {
-    console.log("Realtime update received:", snapshot.val());
-  };
+    // Create hierarchical data: products → reviews
+    const productCollection = collection(db, dataset);
+    const productRef = await addDoc(productCollection, generateProduct(id));
+    const reviewsCollection = collection(productRef, "reviews");
+    await addDoc(reviewsCollection, { user: "User1", comment: "Excellent product", rating: 5 });
 
-  onValue(syncRef, listener);
-  await update(syncRef, data);
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // Allow time for sync to occur
-  const endTime = performance.now();
-  console.log("Real-time synchronization test completed.");
-  return endTime - startTime;
+    // Query nested data
+    const querySnapshot = await getDocs(reviewsCollection);
+    querySnapshot.forEach((doc) => console.log(doc.data()));
+
+    const end = performance.now();
+    return end - start;
 };
 
-const testOfflineCapabilities = async () => {
-  const startTime = performance.now();
-  const offlineRef = ref(realtimeDB, "offline_test");
-  const data = { offline_key: "offline_value" };
+// Updated Real-Time Sync Benchmark to include multiple runs
+const realTimeSyncTest = async (dataset, id) => {
+    const start = performance.now();
 
-  goOffline(realtimeDB);
-  await update(offlineRef, data);
-  console.log("Data written offline.");
+    // Listen for real-time updates
+    const unsubscribe = onSnapshot(collection(db, dataset), (snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+            console.log(`Change type: ${change.type}`);
+        });
+    });
 
-  goOnline(realtimeDB);
-  console.log("Reconnected and data synced.");
-  const endTime = performance.now();
-  return endTime - startTime;
+    // Add data to trigger real-time updates
+    await addDoc(collection(db, dataset), generateProduct(id));
+
+    const end = performance.now();
+    unsubscribe(); // Stop listening
+    return end - start;
 };
 
-const testFlexibleDataModel = async () => {
-  const startTime = performance.now();
-  const docData = {
-    user: {
-      name: "John Doe",
-      age: 30,
-      preferences: { theme: "dark", notifications: true },
-    },
-    orders: [
-      { order_id: "001", amount: 250.75 },
-      { order_id: "002", amount: 450.50 },
-    ],
-  };
+// Updated Automatic Scaling Benchmark to include multiple runs
+const automaticScalingTest = async (dataset, numRequests, id) => {
+    const writeTimes = [];
 
-  await setDoc(doc(db, "flexible_model_test", "user_1"), docData);
-  console.log("Flexible data model test completed.");
-  const endTime = performance.now();
-  return endTime - startTime;
+    for (let i = 0; i < numRequests; i++) {
+        const start = performance.now();
+        await addDoc(collection(db, dataset), generateProduct(id));
+        const end = performance.now();
+        writeTimes.push(end - start);
+    }
+
+    // Calculate average write time
+    return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length;
 };
 
-const testQueryCapabilities = async () => {
-  const startTime = performance.now();
-  const collectionRef = collection(db, "query_test");
+// Updated Offline Support Benchmark to include multiple runs
+const offlineSupportTest = async (dataset, id) => {
+    // Enable offline persistence
+    try {
+        await enableIndexedDbPersistence(db);
+        console.log("Offline persistence enabled.");
+    } catch (err) {
+        console.error("Persistence failed: ", err);
+        return;
+    }
 
-  for (let i = 0; i < 10; i++) {
-    await setDoc(doc(collectionRef, `doc_${i}`), { value: i * 10 });
-  }
+    // Go offline
+    await db.disableNetwork();
 
-  const queryResult = query(collectionRef, where("value", ">=", 50));
-  const docs = await getDocs(queryResult);
-  const results = docs.docs.map((doc) => doc.data());
-  console.log("Query results:", results);
-  const endTime = performance.now();
-  return endTime - startTime;
+    const start = performance.now();
+
+    // Add data while offline (it will sync when online)
+    await addDoc(collection(db, dataset), generateProduct(id));
+
+    const end = performance.now();
+    console.log("Offline write complete. Changes will sync when online.");
+    return end - start;
 };
 
-const testScaling = async () => {
-  const startTime = performance.now();
-  const collectionRef = collection(db, "scaling_test");
+// Main Benchmark Runner with multiple runs per test
+export const runBenchmark = async () => {
+    const results = { flexibleDataModel: [], realTimeSync: [], automaticScaling: [], offlineSupport: [] };
 
-  for (let i = 0; i < 1000; i++) {
-    await setDoc(doc(collectionRef, `doc_${i}`), { field: `value_${i}` });
-  }
+    for (const dataset of datasetSizes) {
+        console.log(`Running benchmarks for dataset: ${dataset}`);
 
-  console.log("Automatic scaling test completed.");
-  const endTime = performance.now();
-  return endTime - startTime;
+        // Run each benchmark multiple times and calculate the average
+        const flexTime = await runMultipleTimes(flexibleDataModelTest, dataset);
+        results.flexibleDataModel.push(flexTime);
+
+        const realTime = await runMultipleTimes(realTimeSyncTest, dataset);
+        results.realTimeSync.push(realTime);
+
+        const scalingTime = await runMultipleTimes(automaticScalingTest, dataset, 5); // 5 requests for scalability test
+        results.automaticScaling.push(scalingTime);
+
+        const offlineTime = await runMultipleTimes(offlineSupportTest, dataset);
+        results.offlineSupport.push(offlineTime);
+
+        console.log(`Finished benchmarks for dataset: ${dataset}`);
+    }
+
+    console.log("Benchmark results:", results);
+    return results;
 };
 
-const main = async () => {
-  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
-  const results = {
-    schema_less_structure: [],
-    real_time_sync: [],
-    offline_capabilities: [],
-    flexible_data_model: [],
-    query_capabilities: [],
-    scaling: [],
-  };
-
-  for (const dataset of datasetSizes) {
-    console.log(`\nBenchmarking on dataset: ${dataset}`);
-    results.schema_less_structure.push(await testSchemaLessStructure());
-    results.real_time_sync.push(await testRealTimeSync());
-    results.offline_capabilities.push(await testOfflineCapabilities());
-    results.flexible_data_model.push(await testFlexibleDataModel());
-    results.query_capabilities.push(await testQueryCapabilities());
-    results.scaling.push(await testScaling());
-  }
-
-  console.log(results);
-};
-
-main().catch((error) => console.error('Error during benchmarking:', error));
-
+// Run the benchmarks
+runBenchmark().then((results) => console.log("Final Results:", results)).catch((error) => console.error("Error during benchmarking:", error));

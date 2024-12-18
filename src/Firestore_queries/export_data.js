@@ -3,7 +3,6 @@ import path from 'path';
 import { db } from './config.js';
 import { collection, doc, writeBatch } from 'firebase/firestore';
 
-// Helper function to introduce a delay
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 // Retry mechanism with exponential backoff
@@ -23,33 +22,30 @@ const retryWithBackoff = async (fn, retries = 5, delayMs = 100) => {
     }
 };
 
-// Helper function to save products to Firestore in batches
 const saveProductsToFirestore = async (products, collectionName) => {
     await retryWithBackoff(async () => {
-        const batch = writeBatch(db); // Initialize batch
+        const batch = writeBatch(db);
 
         products.forEach((product) => {
-            const docRef = doc(collection(db, collectionName), product.product_id); // Reference the document
-            batch.set(docRef, product); // Add set operation to the batch
+            const docRef = doc(collection(db, collectionName), product.product_id);
+            batch.set(docRef, product);
         });
 
-        await batch.commit(); // Commit the batch
+        await batch.commit();
     });
 };
 
 const processDataset = async (filePath) => {
-    // Read the file and parse the data
     const rawData = fs.readFileSync(filePath);
     const products = JSON.parse(rawData);
 
-    // Get collection name from the filename (e.g., 'ecommerce_1k' from 'ecommerce_2k.json')
+    // Get collection name from the filename
     const collectionName = path.basename(filePath, '.json');
 
     console.log(`Processing dataset from ${filePath} into collection ${collectionName}...`);
 
-    // Process the data in chunks of 2500
     const chunkSize = 2500; 
-    for (let i = 0; i < products.length; i += chunkSize) {
+    for (let i = 5000; i < products.length; i += chunkSize) {
         const chunk = products.slice(i, i + chunkSize); // Slice the chunk of products
         console.log(`Processing products ${i + 1} to ${i + chunk.length}...`);
 
@@ -57,11 +53,11 @@ const processDataset = async (filePath) => {
             await saveProductsToFirestore(chunk, collectionName); // Save the chunk to Firestore
         } catch (error) {
             console.error(`Error saving products ${i + 1} to ${i + chunk.length}: ${error.message}`);
-            break; // Exit on error
+            break;
         }
 
         // Add a delay between batches to avoid exceeding quotas
-        await delay(500); // 500ms delay
+        await delay(500);
     }
 
     console.log(`All products from ${filePath} have been saved to Firestore.`);
@@ -73,8 +69,8 @@ const runDatasetProcessing = async () => {
         //'./data/ecommerce_2k.json',
         //'./data/ecommerce_4k.json',
         //'./data/ecommerce_8k.json',
-        //'./data/ecommerce_16k.json', from 5000
-        './data/ecommerce_25k.json',
+        './data/ecommerce_16k.json',
+        //'./data/ecommerce_25k.json',
     ];
 
     for (const filePath of datasetFilePaths) {
