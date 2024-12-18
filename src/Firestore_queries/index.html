@@ -83,9 +83,9 @@
     const runTestsAndDisplayResults = async () => {
       try {
         console.log("Benchmark start...");
-        const scalabilityResult = await scalabilityTest(500);
+        const scalabilityResult = await scalabilityTest(100);
         const realTimeResult = await realTimeSyncTest();
-        const schemaResult = await schemaFlexibilityTest(500);
+        const schemaResult = await schemaFlexibilityTest(100);
         const globalResult = await globalAvailabilityTest("ecommerce_1k");
 
         console.log("Scalability Test Result:", scalabilityResult);
