@@ -1,25 +1,23 @@
-// Import the functions you need from the SDKs you need
+// Import the necessary Firebase modules
 import { initializeApp } from "firebase/app";
-//import { getAnalytics } from "firebase/analytics";
 import { getFirestore } from "firebase/firestore";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
+//import { getDatabase } from "firebase/database";    // Realtime Database import
 
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyAkq1hVXmPn0WUDToDN9AwiBy7S-3eNk8Q",
-  authDomain: "info-f415.firebaseapp.com",
-  projectId: "info-f415",
-  storageBucket: "info-f415.firebasestorage.app",
-  messagingSenderId: "395303504113",
-  appId: "1:395303504113:web:9eaea7b8759424c6cdc150",
-  measurementId: "G-G1N6VZ2LRT"
+// Firebase configuration
+export const firebaseConfig = {
+  apiKey: "AIzaSyAwHs-mFSlSMR1ap09noDvMcgtlLiZ2hHI",
+  authDomain: "h415-98f20.firebaseapp.com",
+  databaseURL: "https://h415-98f20-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "h415-98f20",
+  storageBucket: "h415-98f20.firebasestorage.app",
+  messagingSenderId: "325975965064",
+  appId: "1:325975965064:web:a45015bef3e8d4f64e4e3d",
+  measurementId: "G-XK1XKYMLEM"
 };
 
-// Initialize Firebase
+// Initialize Firebase and Firestore
 const app = initializeApp(firebaseConfig);
-//const analytics = getAnalytics(app);
 
-// Initialize Firestore
-export const db = getFirestore(app);
+// Initialize Firestore and Realtime Database
+export const db = getFirestore(app);        // Firestore instance
+//export const realtimeDB = getDatabase(app);  // Realtime Database instance

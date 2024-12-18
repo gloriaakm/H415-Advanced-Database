@@ -17,12 +17,19 @@ export const measureTime = async (queryFn, ...args) => {
 };
 
 // Benchmark runner
-export const runBenchmark = async (queryFn, queryName, args = [], iterations = 10) => {
-  console.log(`Benchmarking ${queryName}...`);
+export const runBenchmark = async (queryFn, queryName, args = [], iterations = 6) => {
   const times = [];
   
   for (let i = 0; i < iterations; i++) {
-    const time = await measureTime(queryFn, ...args);
+    let time;
+    if (queryName == 'Delete Query') {
+      time = await measureTime(queryFn, args[0], args[1]); // Delete the document
+      if(i < 5){
+        await addQuery(args[0], args[2]); // Add the document back to the collection
+      }
+    } else {
+      time = await measureTime(queryFn, ...args);
+    }
     if (i > 0) { // Skip the first iteration (cache warming)
       times.push(time);
     }
@@ -33,40 +40,42 @@ export const runBenchmark = async (queryFn, queryName, args = [], iterations = 1
   return avgTime;
 };
 
-
-const datasetSizes = ['ecommerce_1k', 'ecommerce_5k', 'ecommerce_10k', 'ecommerce_50k', 'ecommerce_100k', 'ecommerce_1m']; // Datasets
-const productIs = ['3', '1924', '8124', '456', '129', '42'];
+const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k']; // Datasets
+const productIds = ['3', '1924', '3124', '5456', '15129', '21742'];
+const result = { retrieveAllQuery: [], retrieveRecordQuery: [], deleteQuery: [], addQuery: [], updateQuery: [], compoundQueryTest: [], paginatedQueryTest: [] };
 
 const main = async () => {
   for (let i = 0; i < datasetSizes.length; i++) {
     console.log(`\nBenchmarking on dataset: ${datasetSizes[i]}`);
 
     // Retrieve all documents
-    await runBenchmark(retrieveAllQuery, 'Retrieve All Query', [datasetSizes[i]]);
+    result.retrieveAllQuery.push(await runBenchmark(retrieveAllQuery, 'Retrieve All Query', [datasetSizes[i]]));
     
     // Retrieve a specific record
-    await runBenchmark(retrieveRecordQuery, 'Retrieve Record Query', [datasetSizes[i], productIds[i]]);
+    result.retrieveRecordQuery.push(await runBenchmark(retrieveRecordQuery, 'Retrieve Record Query', [datasetSizes[i], productIds[i]]));
 
     // Retrieve a specific document by product_id
-    const retrievedDoc = await retrieveDocQuery(datasetSizes[i], productIds[i]);
+    const retrievedDoc = await retrieveRecordQuery(datasetSizes[i], productIds[i]);
 
     // Benchmark deletion of the document
-    await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], productIds[i]]);
+    result.deleteQuery.push(await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], retrievedDoc.product_id, retrievedDoc]));
 
     // Re-add the deleted document
     let newDocId = null; 
-    const readdDocumentFn = async () => { newDocId = await addQuery(datasetSizes[i], retrievedDoc); };
-    await runBenchmark(readdDocumentFn, 'Re-add Query', []);
+    const readDocumentFn = async () => { newDocId = await addQuery(datasetSizes[i], retrievedDoc); };
+    result.addQuery.push(await runBenchmark(readDocumentFn, 'Re-add Query', []));
 
     // Benchmark update query
-    await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]);
+    result.updateQuery.push(await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]));
 
     // Benchmark compound query
-    await runBenchmark(compoundQueryTest, 'Compound Query', [datasetSizes[i], 'Home']);
+    result.compoundQueryTest.push(await runBenchmark(compoundQueryTest, 'Compound Query', [datasetSizes[i], 'Home']));
 
     // Benchmark paginated query
-    await runBenchmark(paginatedQueryTest, 'Paginated Query', [datasetSizes[i], 100, null]);
+    result.paginatedQueryTest.push(await runBenchmark(paginatedQueryTest, 'Paginated Query', [datasetSizes[i], 100, null]));
+
   }
+  console.log('Benchmarking completed for dataset with results:', result);
 };
 
 main().catch((error) => console.error('Error during benchmarking:', error));
