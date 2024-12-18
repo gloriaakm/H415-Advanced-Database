@@ -1,90 +1,90 @@
-// benchmark.js
-import { db, realtimeDB } from './config.js';
-import { performance } from "perf_hooks";
-import { getDocs, collection, query, where, limit, setDoc, doc, updateDoc } from "firebase/firestore";
-import { ref, update, goOffline, goOnline, onValue } from "firebase/database";
+import { db } from './config.js';
+import { collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const testSchemaLessStructure = async () => {
-  const startTime = performance.now();
-  const testData = {
-    doc_1: { field1: "value1", field2: 123 },
-    doc_2: { fieldA: ["list", "of", "values"], fieldB: { nested: "object" } },
-  };
 
-  for (const [docId, docData] of Object.entries(testData)) {
-    await setDoc(doc(db, "schema_less_test", docId), docData);
+export const scalabilityTest = async (db, numRequests) => {
+  const writeTimes = [];
+  for (let i = 0; i < 6; i++) {
+    const start = performance.now();
+    for (let j = 0; j < numRequests; j++) {
+      await addDoc(collection(db, "products"), {
+        name: `Product ${j}`,
+        price: Math.random() * 100,
+        timestamp: new Date()
+      });
+    }
+    const end = performance.now();
+    if (i > 0) writeTimes.push(end - start);
   }
-  const endTime = performance.now();
-  console.log("Schema-less structure test completed.");
-  return endTime - startTime;
+  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length;
 };
 
-const testRealTimeSync = async () => {
-  const startTime = performance.now();
-  const syncRef = ref(realtimeDB, "real_time_sync_test");
-  const data = { key1: "value1", key2: "value2" };
-
-  const listener = (snapshot) => {
-    console.log("Realtime update received:", snapshot.val());
-  };
-
-  onValue(syncRef, listener);
-  await update(syncRef, data);
-  await new Promise((resolve) => setTimeout(resolve, 2000)); // Allow time for sync to occur
-  const endTime = performance.now();
-  console.log("Real-time synchronization test completed.");
-  return endTime - startTime;
-};
-
-const testOfflineCapabilities = async () => {
-  const startTime = performance.now();
-  const offlineRef = ref(realtimeDB, "offline_test");
-  const data = { offline_key: "offline_value" };
-
-  goOffline(realtimeDB);
-  await update(offlineRef, data);
-  console.log("Data written offline.");
-
-  goOnline(realtimeDB);
-  console.log("Reconnected and data synced.");
-  const endTime = performance.now();
-  return endTime - startTime;
-};
-
-const testFlexibleDataModel = async () => {
-  const startTime = performance.now();
-  const docData = {
-    user: {
-      name: "John Doe",
-      age: 30,
-      preferences: { theme: "dark", notifications: true },
-    },
-    orders: [
-      { order_id: "001", amount: 250.75 },
-      { order_id: "002", amount: 450.50 },
-    ],
-  };
-
-  await setDoc(doc(db, "flexible_model_test", "user_1"), docData);
-  console.log("Flexible data model test completed.");
-  const endTime = performance.now();
-  return endTime - startTime;
-};
-
-const testQueryCapabilities = async () => {
-  const startTime = performance.now();
-  const collectionRef = collection(db, "query_test");
-
-  for (let i = 0; i < 10; i++) {
-    await setDoc(doc(collectionRef, `doc_${i}`), { value: i * 10 });
+export const realTimeSyncTest = async () => { 
+  const productRef = collection(db, "products");
+  const writeTimes = [];
+  for (let i = 0; i < 6; i++) {  // Run the test 6 times
+    const start = performance.now();
+    // Simulate concurrent writes/updates to the same product
+    await addDoc(productRef, { name: `Product RealTime`, price: Math.random() * 100 });
+    const end = performance.now();
+    if (i > 0) writeTimes.push(end - start); // Discard the first execution
   }
+  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+ };
 
-  const queryResult = query(collectionRef, where("value", ">=", 50));
-  const docs = await getDocs(queryResult);
-  const results = docs.docs.map((doc) => doc.data());
-  console.log("Query results:", results);
-  const endTime = performance.now();
-  return endTime - startTime;
+export const schemaFlexibilityTest = async (numRequests) => { 
+  const writeTimes = [];
+  for (let i = 0; i < 6; i++) {  // Run the test 6 times
+    const start = performance.now();
+    for (let j = 0; j < numRequests; j++) {
+      await addDoc(collection(db, "products"), {
+        name: `Product ${j}`,
+        price: Math.random() * 100,
+        extraInfo: { color: "red", size: "M" },  // Unstructured data
+        timestamp: new Date()
+      });
+    }
+    const end = performance.now();
+    if (i > 0) writeTimes.push(end - start); // Discard the first execution
+  }
+  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+ };
+
+export const globalAvailabilityTest = async (dataset) => { 
+  const writeTimes = [];
+  for (let i = 0; i < 6; i++) {  // Run the test 6 times
+    const start = performance.now();
+    // Simulate multi-region writes (Firestore handles this natively)
+    await addDoc(collection(db, dataset), {
+      name: `Smartphone`,
+      price: Math.random() * 100,
+      timestamp: new Date()
+    });
+    const end = performance.now();
+    if (i > 0) writeTimes.push(end - start); // Discard the first execution
+  }
+  return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length; // Average time
+ };
+
+export const runBenchmark = async () => {
+  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k'];
+  const results = { scalability: [], realTimeSync: [], schemaFlexibility: [], globalAvailability: [] };
+
+  for (const dataset of datasetSizes) {
+    const scalabilityTime = await scalabilityTest(100);
+    const realTimeSyncTime = await realTimeSyncTest();
+    const schemaFlexTime = await schemaFlexibilityTest(100);
+    const globalAvailabilityTime = await globalAvailabilityTest(dataset);
+
+    results.scalability.push(scalabilityTime);
+    results.realTimeSync.push(realTimeSyncTime);
+    results.schemaFlexibility.push(schemaFlexTime);
+    results.globalAvailability.push(globalAvailabilityTime);
+    console.log("benchmark.js chargé correctement !");
+  }
+  
+  return results;
+};return endTime - startTime;
 };
 
 const testScaling = async () => {
