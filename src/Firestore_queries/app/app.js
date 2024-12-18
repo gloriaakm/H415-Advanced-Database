@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-app.js";
-import { getFirestore, collection, query, orderBy, where, limit, getDocs } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
+import { getFirestore, collection, query, orderBy, where, limit } from "https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore.js";
 
 // Firebase configuration
 const firebaseConfig = {
@@ -41,24 +41,31 @@ function renderProduct(product) {
   `;
 }
 
-// Fetch products from Firestore
+// Fetch products with real-time updates
 async function fetchProducts(queryFunction) {
   productList.innerHTML = "";
 
   try {
     const productsRef = collection(db, collectionName); // Use the current collection
     const q = queryFunction(productsRef);
-    const snapshot = await getDocs(q);
 
-    if (snapshot.empty) {
-      productList.innerHTML = "<p>No products found.</p>";
-      return;
-    }
+    // Real-time listener for updates
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      productList.innerHTML = "";
+      if (snapshot.empty) {
+        productList.innerHTML = "<p>No products found.</p>";
+        return;
+      }
 
-    snapshot.forEach((doc) => {
-      const product = doc.data();
-      productList.innerHTML += renderProduct(product);
+      snapshot.forEach((doc) => {
+        const product = doc.data();
+        productList.innerHTML += renderProduct(product);
+      });
     });
+
+    // Optionally return the unsubscribe function if you want to stop listening to changes later
+    return unsubscribe;
+
   } catch (error) {
     console.error("Error fetching products:", error);
     productList.innerHTML = `<p>Error: ${error.message}</p>`;
@@ -75,11 +82,7 @@ document.getElementById("searchButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(
-      productsRef,
-      where("name", ">=", searchTerm),
-      where("name", "<=", searchTerm + "\uf8ff")
-    )
+    query(productsRef, where("name", ">=", searchTerm), where("name", "<=", searchTerm + "\uf8ff"), limit(5))
   );
 });
 
@@ -93,7 +96,7 @@ document.getElementById("categoryButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("category", "array-contains", category))
+    query(productsRef, where("category", "array-contains", category), limit(5))
   );
 });
 
@@ -108,7 +111,7 @@ document.getElementById("priceButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice))
+    query(productsRef, where("price", ">=", minPrice), where("price", "<=", maxPrice), limit(5))
   );
 });
 
@@ -122,7 +125,7 @@ document.getElementById("ratingButton").addEventListener("click", () => {
   }
 
   fetchProducts((productsRef) =>
-    query(productsRef, where("rating", ">=", rating))
+    query(productsRef, where("rating", ">=", rating), limit(5))
   );
 });
 
@@ -132,11 +135,11 @@ document.getElementById("sortButton").addEventListener("click", () => {
 
   fetchProducts((productsRef) => {
     if (sortOption === "newest") {
-      return query(productsRef, orderBy("date_added", "desc"), limit(20));
+      return query(productsRef, orderBy("date_added", "desc"), limit(5));
     } else if (sortOption === "price-asc") {
-      return query(productsRef, orderBy("price", "asc"), limit(20));
+      return query(productsRef, orderBy("price", "asc"), limit(5));
     } else if (sortOption === "price-desc") {
-      return query(productsRef, orderBy("price", "desc"), limit(20));
+      return query(productsRef, orderBy("price", "desc"), limit(5));
     }
   });
 });
