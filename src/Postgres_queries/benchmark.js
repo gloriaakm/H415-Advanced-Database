@@ -1,5 +1,4 @@
 import pkg from 'pg';
-import { performance } from 'perf_hooks';
 const { Client } = pkg;
 
 const client = new Client({
@@ -12,7 +11,7 @@ const client = new Client({
 await client.connect();
 
 // Scalability & Load Testing
-const scalabilityTest = async (table, numRequests) => {
+export const scalabilityTest = async (table, numRequests) => {
   const writeTimes = [];
   for (let i = 0; i < 6; i++) {  // Run the test 6 times (discard first run)
     const start = performance.now();
@@ -26,7 +25,7 @@ const scalabilityTest = async (table, numRequests) => {
 };
 
 // Real-Time Synchronization (Multi-Client Updates)
-const realTimeSyncTest = async (table) => {
+export const realTimeSyncTest = async (table) => {
   const writeTimes = [];
   for (let i = 0; i < 6; i++) {  // Run the test 6 times
     const start = performance.now();
@@ -39,7 +38,7 @@ const realTimeSyncTest = async (table) => {
 };
 
 // Unstructured Data & Schema Flexibility
-const schemaFlexibilityTest = async (table, numRequests) => {
+export const schemaFlexibilityTest = async (table, numRequests) => {
   const writeTimes = [];
   for (let i = 0; i < 6; i++) {  // Run the test 6 times
     const start = performance.now();
@@ -54,7 +53,7 @@ const schemaFlexibilityTest = async (table, numRequests) => {
 };
 
 // Global Availability, Replication & Latency
-const globalAvailabilityTest = async (table) => {
+export const globalAvailabilityTest = async (table) => {
   const writeTimes = [];
   for (let i = 0; i < 6; i++) {  // Run the test 6 times
     const start = performance.now();
@@ -68,14 +67,14 @@ const globalAvailabilityTest = async (table) => {
 
 const main = async () => {
   const results = { scalability: [], realTimeSync: [], schemaFlexibility: [], globalAvailability: []  };
-  const tables = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_32k', 'ecommerce_64k', 'ecommerce_128k',];
+  const tables = ['product_categories', 'products', 'product_reviews', 'product_images'];
 
   for (const table of tables) {
     console.log(`Running PostgreSQL benchmarks for table: ${table}`);
     
-    const scalabilityTime = await scalabilityTest(table, 1000);  // Test with 1000 writes
+    const scalabilityTime = await scalabilityTest(table, 100);  // Test with 1000 writes
     const realTimeSyncTime = await realTimeSyncTest(table);
-    const schemaFlexTime = await schemaFlexibilityTest(table, 1000);  // Test with 1000 writes
+    const schemaFlexTime = await schemaFlexibilityTest(table, 100);  // Test with 1000 writes
     const globalAvailabilityTime = await globalAvailabilityTest(table);
   
     console.log(`Scalability Test Time (1000 writes): ${scalabilityTime.toFixed(2)} ms`);
