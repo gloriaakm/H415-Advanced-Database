@@ -84,45 +84,4 @@ export const runBenchmark = async () => {
   }
   
   return results;
-};return endTime - startTime;
 };
-
-const testScaling = async () => {
-  const startTime = performance.now();
-  const collectionRef = collection(db, "scaling_test");
-
-  for (let i = 0; i < 1000; i++) {
-    await setDoc(doc(collectionRef, `doc_${i}`), { field: `value_${i}` });
-  }
-
-  console.log("Automatic scaling test completed.");
-  const endTime = performance.now();
-  return endTime - startTime;
-};
-
-const main = async () => {
-  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
-  const results = {
-    schema_less_structure: [],
-    real_time_sync: [],
-    offline_capabilities: [],
-    flexible_data_model: [],
-    query_capabilities: [],
-    scaling: [],
-  };
-
-  for (const dataset of datasetSizes) {
-    console.log(`\nBenchmarking on dataset: ${dataset}`);
-    results.schema_less_structure.push(await testSchemaLessStructure());
-    results.real_time_sync.push(await testRealTimeSync());
-    results.offline_capabilities.push(await testOfflineCapabilities());
-    results.flexible_data_model.push(await testFlexibleDataModel());
-    results.query_capabilities.push(await testQueryCapabilities());
-    results.scaling.push(await testScaling());
-  }
-
-  console.log(results);
-};
-
-main().catch((error) => console.error('Error during benchmarking:', error));
-
