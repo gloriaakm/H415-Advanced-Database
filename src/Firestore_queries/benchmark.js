@@ -19,7 +19,6 @@ const measureTime = async (queryFn, ...args) => {
 
 // Benchmark runner
 const runBenchmark = async (queryFn, queryName, args = [], iterations = 6) => {
-  console.log(`Benchmarking ${queryName}...`);
   const times = [];
   for (let i = 0; i < iterations; i++) {
     const time = await measureTime(queryFn, ...args);
@@ -57,10 +56,11 @@ const main = async () => {
 
     let newDocId = null; // To capture the new document ID
     const readDocumentFn = async () => {newDocId = await addQuery(datasetSizes[i], retrievedDoc);};
-    result.readDocumentFn.push(await runBenchmark(readDocumentFn, 'Re-add Query', []));
+    result.addQuery.push(await runBenchmark(readDocumentFn, 'Re-add Query', []));
 
     result.updateQuery.push(await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]));
   }
+  console.log('Benchmarking completed for dataset with results:', result);
 };
 
 main().catch((error) => console.error('Error during benchmarking:', error));

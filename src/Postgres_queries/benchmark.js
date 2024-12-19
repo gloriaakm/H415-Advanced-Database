@@ -2,6 +2,7 @@
 import { performance } from 'perf_hooks';
 import { retrieveAllQuery } from './retrieve_all_query.js';
 import { retrieveRecordQuery } from './retrieve_record_query.js';
+import { retrieveDocQuery } from './retrieve_doc_query.js';
 import { deleteQuery } from './delete_query.js';
 import { addQuery } from './add_query.js';
 import { updateQuery } from './update_query.js';
@@ -41,7 +42,7 @@ export const runBenchmark = async (queryFn, queryName, args = [], iterations = 6
 };
 
 const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k']; // Datasets
-const productIds = ['3', '1924', '3124', '5456', '15129', '21742'];
+const productIds = ['33', '1924', '3124', '5456', '15129', '21742'];
 const result = { retrieveAllQuery: [], retrieveRecordQuery: [], deleteQuery: [], addQuery: [], updateQuery: [], compoundQueryTest: [], paginatedQueryTest: [] };
 
 const main = async () => {
@@ -55,7 +56,7 @@ const main = async () => {
     result.retrieveRecordQuery.push(await runBenchmark(retrieveRecordQuery, 'Retrieve Record Query', [datasetSizes[i], productIds[i]]));
 
     // Retrieve a specific document by product_id
-    const retrievedDoc = await retrieveRecordQuery(datasetSizes[i], productIds[i]);
+    const retrievedDoc = await retrieveDocQuery(datasetSizes[i], productIds[i]);
 
     // Benchmark deletion of the document
     result.deleteQuery.push(await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], retrievedDoc.product_id, retrievedDoc]));
