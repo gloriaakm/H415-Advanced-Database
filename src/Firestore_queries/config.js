@@ -1,6 +1,6 @@
 // Import the necessary Firebase modules
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeApp } from "firebase/app";
+import { getFirestore } from "firebase/firestore";
 //import { getDatabase } from "firebase/database";    // Realtime Database import
 
 // Firebase configuration
