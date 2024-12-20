@@ -19,38 +19,45 @@ This project evaluates the suitability of document stores for a specific applica
 ### System Setup
 
 1. **Update the System:**
-```bash```
+```bash
 sudo apt update
-
+```
 2. **Install Node.js and npm:**
 ```bash
 sudo apt install nodejs npm
+```
 
 3. Install Firebase Tools:
 ```bash
 npm install -g firebase-tools
+```
 
 4. Install PostgreSQL:
 ```bash
 sudo apt install postgresql
+```
 
 5. Configure PostgreSQL:
 - Create a new role:
 ```sql
 CREATE ROLE h415_user WITH CREATEDB CREATEROLE LOGIN PASSWORD '1234';
+```
 
 - Create a new database:
 ```sql
 CREATE DATABASE h415_db;
+```
 
 6. Initialize the Database and Import Data:
 - Run the initialization script:
 ```bash
 ./init.sh
+```
 
 - Export the data to the database:
 ```bash
 node ./src/Postgres_queries/export_data.js
+```
 
 ## Benchmark
 Run the ``./src/Firestore_queries/benchmark.js`` and the ``./src/Postgres_queries/benchmark.js``
