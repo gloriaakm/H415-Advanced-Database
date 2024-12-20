@@ -1,151 +1,66 @@
-import { db } from './config.js';
-import { collection, addDoc, doc, setDoc, getDocs, onSnapshot, enableIndexedDbPersistence } from 'firebase/firestore';
+import { performance } from 'perf_hooks';
 
-// Utility functions
-const getRandomValue = (array) => array[Math.floor(Math.random() * array.length)];
-const getRandomNumber = (min, max) => Math.random() * (max - min) + min;
+// Import queries
+import retrieveAllQuery from './retrieve_all_query.js';
+import retrieveRecordQuery from './retrieve_record_query.js';
+import deleteQuery from './delete_query.js';
+import addQuery from './add_query.js';
+import updateQuery from './update_query.js';
+import compoundQueryTest from './compound_query.js';
+import paginatedQueryTest from './paginated_query.js';
 
-// Sample data arrays
-const sampleNames = ["Product A", "Product B", "Product C"];
-const sampleDescriptions = ["High quality", "Best seller", "Limited edition"];
-const categories = ["Electronics", "Home", "Beauty"];
-const sampleImages = ["image1.jpg", "image2.jpg", "image3.jpg"];
+// Utility function to measure execution time
+const measureTime = async (queryFn, ...args) => {
+  const start = performance.now();
+  await queryFn(...args);
+  const end = performance.now();
+  return end - start;
+};
 
-// Function to generate a single product
-const generateProduct = (id) => ({
-  product_id: id.toString(),
-  name: getRandomValue(sampleNames),
-  description: getRandomValue(sampleDescriptions),
-  price: parseFloat(getRandomNumber(5, 500).toFixed(2)),
-  category: [getRandomValue(categories)],
-  rating: parseFloat(getRandomNumber(1, 5).toFixed(1)),
-  reviews: Array.from({ length: Math.floor(getRandomNumber(1, 10)) }, () => ({
-    user: `user${Math.floor(getRandomNumber(1, 1000))}`,
-    comment: getRandomValue(sampleDescriptions),
-    rating: parseFloat(getRandomNumber(1, 5).toFixed(1)),
-  })),
-  images: [getRandomValue(sampleImages), getRandomValue(sampleImages)],
-  stock: Math.floor(getRandomNumber(0, 500)),
-  date_added: new Date(Date.now() - Math.floor(getRandomNumber(0, 1e10))).toISOString(),
-});
-
-// Dataset sizes
-const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k'];
-
-// Utility function to run a benchmark multiple times and return the average time
-const runMultipleTimes = async (func, dataset, times = 6) => {
-    const results = [];
-    for (let i = 0; i < times; i++) {
-        const result = await func(dataset, `benchmark_func_${func.name}_${i}`);
-        results.push(result);
+// Benchmark runner
+const runBenchmark = async (queryFn, queryName, args = [], iterations = 6) => {
+  const times = [];
+  for (let i = 0; i < iterations; i++) {
+    const time = await measureTime(queryFn, ...args);
+    if (i > 0) { // Skip the first iteration (cache warming)
+      times.push(time);
     }
-    // Calculate the average
-    const averageTime = results.reduce((sum, value) => sum + value, 0) / results.length;
-    return averageTime;
+  }
+
+// Calculate average time
+const avgTime = times.length ? times.reduce((a, b) => a + b, 0) / times.length : 0;
+  console.log(`${queryName} - Average Execution Time: ${avgTime.toFixed(2)} ms\n`);
+  return avgTime;
 };
 
-// Updated Flexible Data Model Benchmark to include multiple runs
-const flexibleDataModelTest = async (dataset, id) => {
-    const start = performance.now();
+// Main function
+const main = async () => {
+  const datasetSizes = ['ecommerce_1k', 'ecommerce_2k', 'ecommerce_4k', 'ecommerce_8k', 'ecommerce_16k', 'ecommerce_25k']; // Datasets
+  const product_ids = ['3', '1924', '3124', '5456', '15129', '21742'];
+  const result = { retrieveAllQuery: [], retrieveRecordQuery: [], deleteQuery: [], addQuery: [], updateQuery: [], compoundQueryTest: [], paginatedQueryTest: [] };
+  
+  for (let i = 0; i < datasetSizes.length; i++) {
+    console.log(`\nBenchmarking on dataset: ${datasetSizes[i]}`);
 
-    // Create hierarchical data: products → reviews
-    const productCollection = collection(db, dataset);
-    const productRef = await addDoc(productCollection, generateProduct(id));
-    const reviewsCollection = collection(productRef, "reviews");
-    await addDoc(reviewsCollection, { user: "User1", comment: "Excellent product", rating: 5 });
+    result.retrieveAllQuery.push(await runBenchmark(retrieveAllQuery, 'Retrieve All Query', [datasetSizes[i]]));
+    
+    result.retrieveRecordQuery.push(await runBenchmark(retrieveRecordQuery, 'Retrieve Record Query', [datasetSizes[i], product_ids[i]]));
 
-    // Query nested data
-    const querySnapshot = await getDocs(reviewsCollection);
-    querySnapshot.forEach((doc) => console.log(doc.data()));
+    const retrievedDoc = await retrieveRecordQuery(datasetSizes[i], product_ids[i]);
 
-    const end = performance.now();
-    return end - start;
+    result.compoundQueryTest.push(await runBenchmark(compoundQueryTest, 'Compound Query', [datasetSizes[i], 'Home']));
+
+    result.paginatedQueryTest.push(await runBenchmark(paginatedQueryTest, 'Paginated Query', [datasetSizes[i], 100, null]));
+
+    result.deleteQuery.push(await runBenchmark(deleteQuery, 'Delete Query', [datasetSizes[i], product_ids[i]]));
+
+    let newDocId = null; // To capture the new document ID
+    const readDocumentFn = async () => {newDocId = await addQuery(datasetSizes[i], retrievedDoc);};
+    result.addQuery.push(await runBenchmark(readDocumentFn, 'Re-add Query', []));
+
+    result.updateQuery.push(await runBenchmark(updateQuery, 'Update Query', [datasetSizes[i], newDocId, 299.99]));
+  }
+  console.log('Benchmarking completed for dataset with results:', result);
 };
 
-// Updated Real-Time Sync Benchmark to include multiple runs
-const realTimeSyncTest = async (dataset, id) => {
-    const start = performance.now();
-
-    // Listen for real-time updates
-    const unsubscribe = onSnapshot(collection(db, dataset), (snapshot) => {
-        snapshot.docChanges().forEach((change) => {
-            console.log(`Change type: ${change.type}`);
-        });
-    });
-
-    // Add data to trigger real-time updates
-    await addDoc(collection(db, dataset), generateProduct(id));
-
-    const end = performance.now();
-    unsubscribe(); // Stop listening
-    return end - start;
-};
-
-// Updated Automatic Scaling Benchmark to include multiple runs
-const automaticScalingTest = async (dataset, numRequests, id) => {
-    const writeTimes = [];
-
-    for (let i = 0; i < numRequests; i++) {
-        const start = performance.now();
-        await addDoc(collection(db, dataset), generateProduct(id));
-        const end = performance.now();
-        writeTimes.push(end - start);
-    }
-
-    // Calculate average write time
-    return writeTimes.reduce((a, b) => a + b, 0) / writeTimes.length;
-};
-
-// Updated Offline Support Benchmark to include multiple runs
-const offlineSupportTest = async (dataset, id) => {
-    // Enable offline persistence
-    try {
-        await enableIndexedDbPersistence(db);
-        console.log("Offline persistence enabled.");
-    } catch (err) {
-        console.error("Persistence failed: ", err);
-        return;
-    }
-
-    // Go offline
-    await db.disableNetwork();
-
-    const start = performance.now();
-
-    // Add data while offline (it will sync when online)
-    await addDoc(collection(db, dataset), generateProduct(id));
-
-    const end = performance.now();
-    console.log("Offline write complete. Changes will sync when online.");
-    return end - start;
-};
-
-// Main Benchmark Runner with multiple runs per test
-export const runBenchmark = async () => {
-    const results = { flexibleDataModel: [], realTimeSync: [], automaticScaling: [], offlineSupport: [] };
-
-    for (const dataset of datasetSizes) {
-        console.log(`Running benchmarks for dataset: ${dataset}`);
-
-        // Run each benchmark multiple times and calculate the average
-        const flexTime = await runMultipleTimes(flexibleDataModelTest, dataset);
-        results.flexibleDataModel.push(flexTime);
-
-        const realTime = await runMultipleTimes(realTimeSyncTest, dataset);
-        results.realTimeSync.push(realTime);
-
-        const scalingTime = await runMultipleTimes(automaticScalingTest, dataset, 5); // 5 requests for scalability test
-        results.automaticScaling.push(scalingTime);
-
-        const offlineTime = await runMultipleTimes(offlineSupportTest, dataset);
-        results.offlineSupport.push(offlineTime);
-
-        console.log(`Finished benchmarks for dataset: ${dataset}`);
-    }
-
-    console.log("Benchmark results:", results);
-    return results;
-};
-
-// Run the benchmarks
-runBenchmark().then((results) => console.log("Final Results:", results)).catch((error) => console.error("Error during benchmarking:", error));
+main().catch((error) => console.error('Error during benchmarking:', error));
