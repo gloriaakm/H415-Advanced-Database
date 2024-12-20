@@ -1,38 +1,56 @@
-# Advanced Database: Document stores analysis
+# Advanced Database: Document Stores Analysis
 
-## Course
-- **Course:** INFO-H415
-- **Year:** MA1
+## General Information
 
-## Description
+- **Course:** INFO-H415  
+- **Year:** MA1  
+- **Repository:** [GitHub Repository](https://github.com/gloriaakm/H415-Advanced-Database.git)
 
-Suitability of document stores in our specific application by benchmarking Firebase and Firestore against a traditional relational database (PostgreSQL).
-https://github.com/gloriaakm/H415-Advanced-Database.git
+## Project Description
 
-## Setup
+This project evaluates the suitability of document stores for a specific application by benchmarking Firebase Firestore against a traditional relational database (PostgreSQL).
 
-**JavaScript** & **Node.js** & **Python**
-``sudo apt update``
-``sudo apt install nodejs npm``
+## Prerequisites and Setup
 
-**Firestore**: 
+### Tools and Technologies
+- **Languages/Frameworks:** JavaScript, Node.js, Python
+- **Databases:** Firestore, PostgreSQL
 
-``npm install -g firebase-tools``
+### System Setup
 
-**PostgreSQL**:
+1. **Update the System:**
+```bash```
+sudo apt update
 
-``sudo apt install postgresql``
+2. **Install Node.js and npm:**
+```bash
+sudo apt install nodejs npm
 
-Create the database create a new ROLE h415_user WITH
+3. Install Firebase Tools:
+```bash
+npm install -g firebase-tools
 
-   CREATEDB
-   CREATEROLE
-   LOGIN
-   PASSWORD '1234'
+4. Install PostgreSQL:
+```bash
+sudo apt install postgresql
 
-And create DATABASE h415_db
+5. Configure PostgreSQL:
+- Create a new role:
+```sql
+CREATE ROLE h415_user WITH CREATEDB CREATEROLE LOGIN PASSWORD '1234';
 
-Run ./init.sh and export the data into the database unsing ``./src/Postgres_queries/export_data.js``
+- Create a new database:
+```sql
+CREATE DATABASE h415_db;
+
+6. Initialize the Database and Import Data:
+- Run the initialization script:
+```bash
+./init.sh
+
+- Export the data to the database:
+```bash
+node ./src/Postgres_queries/export_data.js
 
 ## Benchmark
 Run the ``./src/Firestore_queries/benchmark.js`` and the ``./src/Postgres_queries/benchmark.js``
