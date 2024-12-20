@@ -9,7 +9,7 @@
 Suitability of document stores in our specific application by benchmarking Firebase and Firestore against a traditional relational database (PostgreSQL).
 https://github.com/gloriaakm/H415-Advanced-Database.git
 
-## Softwares
+## Setup
 
 **JavaScript** & **Node.js** & **Python**
 ``sudo apt update``
@@ -23,9 +23,17 @@ https://github.com/gloriaakm/H415-Advanced-Database.git
 
 ``sudo apt install postgresql``
 
+Create the database create a new ROLE h415_user WITH
+   CREATEDB
+   CREATEROLE
+   LOGIN
+   PASSWORD '1234'
+And create DATABASE h415_db
+Run ./init.sh and export the data into the database unsing ``./src/Postgres_queries/export_data.js``
+
 ## Benchmark
-run the ``./src/Firestore_queries/benchmark.js`` and the ``./src/Postgres_queries/benchmark.js``
+Run the ``./src/Firestore_queries/benchmark.js`` and the ``./src/Postgres_queries/benchmark.js``
 
 **Make plots**:
 
-retrieve the results in the console and paste them in ``./src/plot.py`` (plots are saved as png files in the root)
+Retrieve the results in the console and paste them in ``./src/plot.py`` (plots are saved as png files in the root)
