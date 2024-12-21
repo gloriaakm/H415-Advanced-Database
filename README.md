@@ -64,3 +64,8 @@ Run the ``./src/Firestore_queries/benchmark.js`` and the ``./src/Postgres_querie
 
 **Make plots**:
 Retrieve the results in the console and paste them in ``./src/plot.py`` (plots are saved as png files in the root)
+
+## Application
+Install Live Server:
+1. Open the project and click to Go Live from the status bar to turn the server on/off
+2. Right click on ``./src/Firestore_queries/index.html`` from Explorer Window and click on Open with Live Server
